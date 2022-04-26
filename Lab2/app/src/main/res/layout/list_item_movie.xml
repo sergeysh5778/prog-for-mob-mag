@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_view"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:layout_marginVertical="@dimen/list_item_vertical_margin">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/info_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:text="Movie Info" />
+
+</com.google.android.material.card.MaterialCardView>

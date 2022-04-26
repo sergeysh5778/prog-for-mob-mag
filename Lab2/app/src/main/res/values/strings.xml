@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Лабораторная работа №2</string>
+
+    <string name="prompt_username">Имя пользователя</string>
+    <string name="prompt_password">Пароль</string>
+    <string name="action_sign_in">Войти</string>
+    <string name="action_sign_in_short">Войти</string>
+    <string name="welcome">"Добро пожаловать, "</string>
+    <string name="invalid_username">Имя пользователя не может быть пустым</string>
+    <string name="invalid_password">Пароль должен содержать не менее шести символов</string>
+    <string name="login_failed">"Пользователь с таким именем и/или паролем не найден"</string>
+
+    <string-array name="usernames">
+        <item>sergeysh</item>
+        <item>user</item>
+        <item>alice</item>
+        <item>bob</item>
+        <item>3rdparty</item>
+    </string-array>
+    <string-array name="passwords">
+        <item>Pass123$</item>
+        <item>qwerty</item>
+        <item>123456</item>
+        <item>098765</item>
+        <item>qweasdzxc</item>
+    </string-array>
+
+    <string name="title_movies">Фильмы</string>
+    <string name="title_selected_movie">Выбранный фильм</string>
+</resources>
