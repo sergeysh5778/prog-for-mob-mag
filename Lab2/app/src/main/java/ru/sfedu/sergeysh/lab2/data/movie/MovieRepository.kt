@@ -6,6 +6,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import java.util.*
 
 class MovieRepository {
 
@@ -16,9 +17,12 @@ class MovieRepository {
     suspend fun getMovieList(): List<MovieCard> {
         return withContext(Dispatchers.IO) {
             try {
-                val doc: Document = Jsoup.connect("$baseUrl$top250Url").get()
-//                val doc: Document = Jsoup.parse(top250html)
-                val movieDivs: Elements = doc.select("div[data-tid='8a6cbb06']")
+                var doc: Document = Jsoup.connect("$baseUrl$top250Url").get()
+                var movieDivs: Elements = doc.select("div[data-tid='8a6cbb06']")
+                if (movieDivs.isEmpty()) {
+                    doc = Jsoup.parse(top250html)
+                    movieDivs = doc.select("div[data-tid='8a6cbb06']")
+                }
 
                 movieDivs.map {
                     val posterImg: Element = it.selectFirst("img[data-tid='d813cf42']")!!
@@ -33,7 +37,8 @@ class MovieRepository {
                         linkA.attr("href"),
                         httpsPrefix + posterImg.attr("src"),
                         nameSpan.text(),
-                        additionalInfoSpan.text().substringAfter("• ").substringBefore(' '),
+                        additionalInfoSpan.text().substringAfter("• ").substringBefore(' ')
+                            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                         mainInfoSpan.text().substringBeforeLast(',').substringAfterLast(' '),
                     )
                 }
@@ -45,13 +50,25 @@ class MovieRepository {
 
     suspend fun getMovieDetails(movieUrl: String): MovieDetails {
         return withContext(Dispatchers.IO) {
-            val doc: Document = Jsoup.connect("$baseUrl$movieUrl").get()
-//            val doc: Document = Jsoup.parse(movie435html)
-            val movieDiv: Element = doc.selectFirst("div[data-tid='3716659c']")!!
+            val movieDiv: Element = try {
+                val doc: Document = Jsoup.connect("$baseUrl$movieUrl").get()
+                doc.selectFirst("div[data-tid='3716659c']")!!
+            } catch (ex: Exception) {
+                val movieHtml: String = when (movieUrl) {
+                    "/film/435/" -> movie435Html
+                    "/film/326/" -> movie326Html
+                    "/film/329/" -> movie329Html
+                    "/film/3498/" -> movie3498Html
+                    "/film/32898/" -> movie32898Html
+                    else -> movie435Html
+                }
+                val doc: Document = Jsoup.parse(movieHtml)
+                doc.selectFirst("div[data-tid='3716659c']")!!
+            }
 
             val posterImg: Element = movieDiv.selectFirst("img.film-poster")!!
             val titleSpan: Element = movieDiv.selectFirst("span[data-tid='75209b22']")!!
-            val descriptionP: Element = movieDiv.selectFirst("p[data-tid='bfd38da2']")!!
+            val descriptionP: Element? = movieDiv.selectFirst("p[data-tid='bfd38da2']")
             val yearDiv: Element = movieDiv.selectFirst("div[data-tid='cfbe5a01']")!!
             val genresDiv: Element = movieDiv.select("div[data-tid='d5ff4cc']")[1]
             val actorsLis: Elements =
@@ -60,11 +77,12 @@ class MovieRepository {
             MovieDetails(
                 movieUrl,
                 httpsPrefix + posterImg.attr("src"),
-                titleSpan.text().removeRange(titleSpan.text().length - 7, titleSpan.text().length),
-                genresDiv.text(),
+                titleSpan.text().substringBeforeLast('('),
+                genresDiv.text()
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                 yearDiv.text(),
                 actorsLis.eachText().joinToString(", "),
-                descriptionP.text(),
+                descriptionP?.text() ?: "—",
             )
         }
     }
@@ -4190,7 +4208,7 @@ class MovieRepository {
         </html>
     """
 
-    private val movie435html: String = """
+    private val movie435Html: String = """
         <!doctype html>
         <html>
 
@@ -5898,4 +5916,6236 @@ class MovieRepository {
 
         </html>
         """"
+
+    private val movie326Html: String = """
+        <!doctype html>
+        <html>
+
+        <head>
+          <meta name="viewport" content="width=device-width">
+          <meta charset="utf-8">
+          <title data-tid="57f72b5">Побег из Шоушенка — Кинопоиск</title>
+          <meta name="theme-color" content="#1f1f1f" data-tid="57f72b5">
+          <meta name="apple-mobile-web-app-capable" content="yes" data-tid="57f72b5">
+          <meta name="apple-mobile-web-app-status-bar-style" content="black" data-tid="57f72b5">
+          <meta name="apple-mobile-web-app-title" content="Кинопоиск" data-tid="57f72b5">
+          <meta name="apple-itunes-app" content="app-id=477718890, ct=kp-web, pt=214944, mt=8" data-tid="57f72b5">
+          <meta name="application-name" content="Кинопоиск" data-tid="57f72b5">
+          <meta property="fb:app_id" content="121953784483000" data-tid="57f72b5">
+          <meta property="fb:pages" content="152308956519" data-tid="57f72b5">
+          <meta property="og:site_name" content="Кинопоиск" data-tid="57f72b5">
+          <meta name="msapplication-TileColor" content="#000" data-tid="57f72b5">
+          <meta name="msapplication-TileImage"
+            content="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+            data-tid="57f72b5">
+          <meta name="msapplication-config" content="//st.kp.yandex.net/public/xml/ieconfig.xml" data-tid="57f72b5">
+          <link rel="mask-icon"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-16.svg"
+            data-tid="57f72b5">
+          <link rel="apple-touch-icon-precomposed"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/apple-favicon-152.png"
+            data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-57.png" sizes="57x57"
+            data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-76.png" sizes="76x76"
+            data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-96.png" sizes="96x96"
+            data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-120.png"
+            sizes="120x120" data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-128.png"
+            sizes="128x128" data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+            sizes="144x144" data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-152.png"
+            sizes="152x152" data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-180.png"
+            sizes="180x180" data-tid="57f72b5">
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-196.png"
+            sizes="196x196" data-tid="57f72b5">
+          <link rel="icon" href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-64.ico"
+            data-tid="57f72b5">
+          <link rel="search" type="application/opensearchdescription+xml" title="Поиск на kinopoisk.ru" href="/kp_search.xml"
+            data-tid="57f72b5">
+          <meta name="description"
+            content="Бухгалтер Энди Дюфрейн обвинён в убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он сталкивается с жестокостью и беззаконием, царящими по обе стороны решётки. Каждый, кто попадает в эти стены, становится их рабом до конца жизни. Но Энди, обладающий живым умом и доброй душой, находит подход как к заключённым, так и к охранникам, добиваясь их особого к себе расположения."
+            data-tid="57f72b5">
+          <meta name="keywords"
+            content="Побег из Шоушенка — Кинопоиск The Shawshank Redemption фильм сериал кино обои фотографии сеансы афиша обзор комментарии рейтинг факты отзывы кадры новости сайт"
+            data-tid="57f72b5">
+          <link type="application/rss+xml" rel="alternate" title="RSS" href="/news.rss" data-tid="57f72b5">
+          <link rel="canonical" href="https://www.kinopoisk.ru/film/326/" data-tid="57f72b5">
+          <meta property="og:title" content="«Побег из Шоушенка» (The Shawshank Redemption, 1994)" data-tid="57f72b5">
+          <meta property="twitter:title" content="«Побег из Шоушенка» (The Shawshank Redemption, 1994)" data-tid="57f72b5">
+          <meta property="og:description"
+            content="Бухгалтер Энди Дюфрейн обвинён в убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он сталкивается с жестокостью и беззаконием, царящими по обе стороны решётки. Каждый, кто попадает в эти стены, становится их рабом до конца жизни. Но Энди, обладающий живым умом и доброй душой, находит подход как к заключённым, так и к охранникам, добиваясь их особого к себе расположения."
+            data-tid="57f72b5">
+          <meta property="twitter:description"
+            content="Бухгалтер Энди Дюфрейн обвинён в убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он сталкивается с жестокостью и беззаконием, царящими по обе стороны решётки. Каждый, кто попадает в эти стены, становится их рабом до конца жизни. Но Энди, обладающий живым умом и доброй душой, находит подход как к заключённым, так и к охранникам, добиваясь их особого к себе расположения."
+            data-tid="57f72b5">
+          <meta property="og:url" content="https://www.kinopoisk.ru/film/326/" data-tid="57f72b5">
+          <meta property="og:image"
+            content="https://avatars.mds.yandex.net/get-kinopoisk-image/4483445/7abae151-2ebb-4d2b-907e-d2fcf5ed1d2c/1200x630"
+            data-tid="57f72b5">
+          <meta property="vk:image"
+            content="https://avatars.mds.yandex.net/get-kinopoisk-image/4483445/7abae151-2ebb-4d2b-907e-d2fcf5ed1d2c/1200x630"
+            data-tid="57f72b5">
+          <meta name="twitter:image"
+            content="https://avatars.mds.yandex.net/get-kinopoisk-image/4483445/7abae151-2ebb-4d2b-907e-d2fcf5ed1d2c/1200x630"
+            data-tid="57f72b5">
+          <meta property="og:image:width" content="1200" data-tid="57f72b5">
+          <meta property="og:image:height" content="630" data-tid="57f72b5">
+          <meta name="twitter:site" content="kinopoiskru" data-tid="57f72b5">
+          <meta name="twitter:card" content="summary_large_image" data-tid="57f72b5">
+          <meta property="og:type" content="website" data-tid="57f72b5">
+          <link rel="alternate" href="android-app://ru.kinopoisk/https/www.kinopoisk.ru/film/326/" data-tid="57f72b5">
+          <link rel="alternate" href="ios-app://EK7Z26L6D4.ru.kinopoisk/https/www.kinopoisk.ru/film/326/" data-tid="57f72b5">
+          <meta name="next-head-count" content="47">
+          <link rel="preload" as="script" href="https://yandex.ru/ads/system/context.js" crossorigin="anonymous"
+            data-tid="db024bc5">
+          <link rel="manifest"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/pwa-manifests/production.json"
+            crossorigin="anonymous" data-tid="74a9c6bc">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+            crossorigin="anonymous" data-n-g="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+            crossorigin="anonymous" data-n-p="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+            crossorigin="anonymous" data-n-p="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+            crossorigin="anonymous" data-n-p="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+            crossorigin="anonymous" data-n-p="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+            crossorigin="anonymous" data-n-p="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+            crossorigin="anonymous" data-n-p="">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+            crossorigin="anonymous">
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+            as="style" crossorigin="anonymous">
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+            crossorigin="anonymous">
+          <noscript data-n-css=""></noscript>
+        </head>
+
+        <body class="body" data-tid="f8463833">
+          </script>
+          <div id="__next" data-reactroot="">
+            <div class="styles_root__hSE6c styles_promoPopover__pKHxa" data-tid="d504712e">
+              <button type="button" class="styles_closeButton__LEexp"><span
+                  class="styles_closeButtonIcon__w69HE"></span></button>
+            </div>
+            <div class="styles_root__vsmL9" data-tid="2781b874">
+              <div class="styles_root__BJH2_ styles_headerContainer__sFBK8" data-tid="1d1e4a8c">
+                <header class="styles_root__jlo2L styles_header__0LyFn styles_rootDark__nQDyF" data-tid="63b05890">
+                  <div class="header-navigation styles_navigation__S8raz styles_navigationDark__x0vdW">
+                    <div class="styles_logoContainer__G47EP">
+                      <div class="styles_root__jfc_s" data-tid="911e2f4d">
+                        <div class="">
+                          <button class="styles_root__coHaQ styles_burger__HcbjK" type="button" data-tid="8ed90190"><span
+                              class="styles_icon__J3wes" style="color:#999999"></span></button>
+                          <div class="styles_dropdown__MqT__ styles_dropdownOpen__mTn_V styles_dropdownDefault__KwZHT"
+                            data-tid="585eb7c0">
+                            <div class="styles_dropdownMenu__bouwC styles_dropdownMenu__c7FZ4 styles_dropdownMenuDark__NzGxR">
+                              <div class="styles_navigationMenu__c_jLJ styles_root__RBtQR" data-tid="e500879d">
+                                <a href="/" class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img
+                                    loading="lazy" class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/128809/4d6f5bd4e839b166859243f82e9fdeb3bc910931/svg"
+                                    data-tid="b35288c1">Главная</a><a href="https://hd.kinopoisk.ru/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/61205/478c72b68bc4ac507483b2676994bbc1df5f05be/svg"
+                                    data-tid="b35288c1">Онлайн-кинотеатр</a><a href="/lists/categories/movies/1/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/50064/ab24b8099cb4ca11c08b0def91dc5c1d4fd78649/svg"
+                                    data-tid="b35288c1">Фильмы</a><a href="/lists/categories/movies/3/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/61205/9daeaf410906b5794685b7b5bb25dfd2c647fccf/svg"
+                                    data-tid="b35288c1">Сериалы</a><a href="/afisha/new/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/118781/ae7fbfc1773a6bbd61ee0154628c6fe14bf6959e/svg"
+                                    data-tid="b35288c1">Билеты в кино</a><a href="/media/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/118781/960a47a181b1b0a28ceb45a075e64c1a9378442c/svg"
+                                    data-tid="b35288c1">Медиа</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div><a href="/" class="styles_root__dYidr styles_logo___bcop" data-tid="d4e8d214"><img
+                            class="styles_img__3hWmL kinopoisk-header-logo__img" alt="Кинопоиск"
+                            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTY0IiBoZWlnaHQ9IjM2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNTguODU5IDE4YzAtNS44ODkgMi45NTQtMTAuNiA4LjI4MS0xMC42IDUuMzI4IDAgOC4yODEgNC43MTEgOC4yODEgMTAuNiAwIDUuODktMi45NTQgMTAuNi04LjI4IDEwLjYtNS4zMjggMC04LjI4Mi00LjcxLTguMjgyLTEwLjZabTguMjgxIDcuNjZjMi4wNzIgMCAyLjk1NC0zLjUzNCAyLjk1NC03LjY1MiAwLTQuMTItLjg4OS03LjY1Mi0yLjk1NC03LjY1Mi0yLjA2NSAwLTIuOTU0IDMuNTMzLTIuOTU0IDcuNjUyLS4wMDcgNC4xMTguODgyIDcuNjUyIDIuOTU0IDcuNjUyWk0zLjg0MyA3Ljd2NS41OTZoLjI5NEw3Ljk4IDcuN2g1LjMybC03LjA5OCA2LjQ3NC4yOTQuMjkzTDE5LjUxIDcuNjkzdjQuNzExTDcuOTczIDE2LjUyM3YuMjkybDExLjUzNy0xLjAyOHY0LjQxOUw3Ljk3MyAxOS4xNzh2LjI5M2wxMS41MzcgNC4xMTh2NC43MTJMNi40OTYgMjEuNTI2bC0uMjk0LjI5MyA3LjA5OCA2LjQ3NEg3Ljk4bC0zLjg0My01LjU5NmgtLjI5NHY1LjU5NkgwVjcuNjg2aDMuODQzVjcuN1ptMTkuMjMgMEgyOC4xbC0uMjk0IDEyLjM2M2guMjk0TDM0LjAxNSA3LjdoNC40Mzh2MjAuNjA4aC01LjAyNmwuMjk0LTEyLjM2NGgtLjI5NEwyNy41MSAyOC4zMDloLTQuNDM4VjcuN1ptMjMuOTU1IDBoLTUuMDI2djIwLjYwOGg1LjAyNnYtOS4xM2g0LjEzN3Y5LjEzaDUuMDI2VjcuN2gtNS4wMjZ2Ny45NTJoLTQuMTM3VjcuN1ptNDUuMjUgMGgtMTQuMTl2MjAuNjA4aDUuMDI3VjExLjIzM2g0LjEzN3YxNy4wNzVoNS4wMjZWNy43Wm0yLjY2IDEwLjNjMC01Ljg4OSAyLjk1NC0xMC42IDguMjgyLTEwLjYgNS4zMiAwIDguMjgxIDQuNzExIDguMjgxIDEwLjYgMCA1Ljg5LTIuOTU0IDEwLjYtOC4yODEgMTAuNi01LjMyIDAtOC4yODItNC43MS04LjI4Mi0xMC42Wm04LjI4MiA3LjY2YzIuMDcyIDAgMi45NTQtMy41MzQgMi45NTQtNy42NTIgMC00LjEyLS44ODktNy42NTItMi45NTQtNy42NTItMi4wNzIgMC0yLjk1NCAzLjUzMy0yLjk1NCA3LjY1MiAwIDQuMTE4Ljg4MiA3LjY1MiAyLjk1NCA3LjY1MlpNMTE5LjE4NyA3LjdoLTUuMDI2djIwLjYwOGg0LjQzOGw1LjkxNi0xMi4zNjRoLjI5NGwtLjI5NCAxMi4zNjRoNS4wMjZWNy43aC00LjQzOGwtNS45MTYgMTIuMzYzaC0uMjk0bC4yOTQtMTIuMzYzWm0yMy42NjkgMTMuNTQxIDQuNzMyLjU4NWMtLjg4OSA0LjEyLTIuOTU0IDYuNzc0LTcuMzY0IDYuNzc0LTUuMzIgMC04LjAxNi00LjcxLTguMDE2LTEwLjYgMC01Ljg4OSAyLjY4OS0xMC42IDguMDE2LTEwLjYgNC4zMTcgMCA2LjQ3NSAyLjY0OSA3LjM2NCA2LjQ3NWwtNC43MzIgMS4xNzdjLS4yOTQtMi4wNjMtMS4xNTUtNC43MS0yLjYzMi00LjcxLTEuNzcxIDAtMi42ODkgMy41MzMtMi42ODkgNy42NTEgMCA0LjA5LjkxOCA3LjY1MiAyLjY4OSA3LjY1MiAxLjQ0OS4wMTUgMi4zMy0yLjM0MSAyLjYzMi00LjQwNFptMTEuODMtMTMuNTRoLTQuNzMydjIwLjYwN2g0LjczMnYtOS4xM2guMjk0bDMuNTQ5IDkuMTNIMTY0bC01LjE3Ny0xMC42TDE2My44NDkgNy43aC01LjAyNmwtMy44NDMgOS4xM2gtLjI5NFY3LjdaIiBmaWxsPSIjZmZmIi8+PC9zdmc+Cg=="
+                            data-tid="79e4350"></a>
+                      </div>
+                    </div>
+                    <div class="styles_mainContainer__faOVn">
+                      <div class="styles_featureMenuContainer__KbrzA">
+                        <nav class="styles_root__DR_oz kinopoisk-header-featured-menu styles_adaptive__F508O"
+                          data-tid="78f04c5d">
+                          <a class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                            href="https://hd.kinopoisk.ru/" target="_self" data-tid="acc26a70"><img aria-label="presentation"
+                              class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/118781/5e4a451dabd5982b775db20bc084cc215fd0e14a/svg"
+                              srcset="" data-tid="b35288c1"><img aria-label="presentation" class="styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/61205/70cc2c1c559189c3139a315b1d06db38faefa2b5/svg"
+                              srcset="" data-tid="b35288c1">Онлайн-кинотеатр</a><a
+                            class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                            href="https://www.kinopoisk.ru/special/smarttv_instruction?utm_source=kinopoisk&amp;utm_medium=selfpromo_kp&amp;utm_campaign=button_header"
+                            target="_blank" data-tid="acc26a70"><img aria-label="presentation"
+                              class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/50064/9bd69a8ca16bd1fa7395dba2ab3082c4bebd306c/svg"
+                              srcset="" data-tid="b35288c1"><img aria-label="presentation" class="styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/61205/c7ca1a7300068a2cf01c57a1f351ba9d89c20ee3/svg"
+                              srcset="" data-tid="b35288c1">Установить на ТВ</a>
+                        </nav>
+                      </div>
+                      <div class="styles_searchFormContainer__GyAL5">
+                        <div class="styles_searchForm__AIMFU styles_searchFormDefault__QNml_" data-tid="8d7d7cbd">
+                          <form class="styles_form__i86wS" action="/index.php">
+                            <div class="styles_root__dTeXi styles_searchInputElement__qNbS4" data-tid="b0e8f9b">
+                              <input type="text" name="kp_query"
+                                class="styles_input__4vNAb kinopoisk-header-search-form-input__input" autocomplete="off"
+                                aria-label="Фильмы, сериалы, персоны" placeholder="Фильмы, сериалы, персоны" value="" required>
+                              <div class="styles_controlContainer__5VetH kinopoisk-header-search-form-input__control-container">
+                                <a href="/s/" class="styles_advancedSearch__uwvnd" aria-label="advanced-search" tabindex="-1">
+                                  <svg class="styles_advancedSearchIcon__Zxjax" xmlns="http://www.w3.org/2000/svg" width="18"
+                                    height="18" viewbox="0 0 18 18">
+                                    <path fill="#000" fill-rule="evenodd"
+                                      d="M5.995 10.3A2.7 2.7 0 0 1 8.504 12H17v2H8.504a2.7 2.7 0 0 1-5.018 0H1v-2h2.486a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm5.997-8.7A2.7 2.7 0 0 1 14.5 5H17v2h-2.5a2.7 2.7 0 0 1-5.017 0H1V5h8.483a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z">
+                                    </path>
+                                  </svg></a><button type="submit" class="styles_root__CUh_v styles_submit__2AIpj"
+                                  aria-label="submit" tabindex="-1" data-tid="f49ca51f">
+                                  <svg class="styles_icon__1bYKL search-form-submit-button__icon"
+                                    xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 18 18">
+                                    <path fill="#000" fill-rule="evenodd"
+                                      d="M12.026 10.626L16 14.6 14.6 16l-3.974-3.974a5.5 5.5 0 1 1 1.4-1.4zM7.5 11.1a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2z">
+                                    </path>
+                                  </svg>Найти</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="styles_userContainer__hLiRQ">
+                      <button type="button" class="styles_searchButton__kXYs6"><span
+                          class="styles_searchButtonIconSmall__poB4V"></span></button>
+                      <div class="styles_root__JgDCj" data-tid="1a82203d">
+                        <div>
+                          <a class="styles_plusDesktopBrandingButton__X4z6T styles_root__OkfMY styles_padding4x14__J5WqH styles_root__lbhjd styles_rootLight__4o4CJ styles_rootPlus__Xx9Yy"
+                            href="https://hd.kinopoisk.ru/?source=kinopoisk_head_button">Попробовать Плюс</a>
+                        </div><button type="button" class="styles_loginButton__LWZQp">Войти</button>
+                      </div>
+                    </div>
+                  </div>
+                </header>
+              </div>
+              <div class="styles_contentContainer__bi2n2 styles_baseContainer__8XBMw">
+                <div class="styles_pending__AMNhR styles_height250__Dw0ef" data-tid="a913e1e7">
+                  <div class="styles_themeTopBanner__RLKkf" data-tid="e810e001">
+                    <div id="foxaddesktop_top_banner" class="styles_container__XXCpX" data-tid="9501d3f4"></div>
+                  </div>
+                </div>
+                <div class="styles_root__B1q5W styles_withBottomBorder__qPxdr styles_rootLight___QD_Q styles_root__axj8R"
+                  data-tid="21855542">
+                  <div class="styles_background__ME0M5"></div>
+                  <div class="styles_root__UtArQ" data-tid="3716659c">
+                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP"
+                        data-tid="893da4ad">
+                        <div class="styles_sidebar__mZOfP">
+                          <div class="styles_root__JykRA styles_basicMediaSection__l88k1" data-tid="be907ee0">
+                            <div class="styles_posterContainer__F02wH">
+                              <div class="styles_root__0qoat" data-tid="fe27f3c4">
+                                <a class="styles_posterLink__C1HRc" href="/film/326/posters/"><img
+                                    class="film-poster styles_root__24Jga styles_rootInLight__GwYHH image styles_root__DZigd"
+                                    alt="Побег из Шоушенка (The Shawshank Redemption)"
+                                    src="//avatars.mds.yandex.net/get-kinopoisk-image/1599028/0b76b2a2-d1c7-4f04-a284-80ff7bb709a4/300x450"
+                                    srcset="//avatars.mds.yandex.net/get-kinopoisk-image/1599028/0b76b2a2-d1c7-4f04-a284-80ff7bb709a4/300x450 1x, //avatars.mds.yandex.net/get-kinopoisk-image/1599028/0b76b2a2-d1c7-4f04-a284-80ff7bb709a4/600x900 2x"
+                                    data-tid="d813cf42"></a><a
+                                  class="styles_soundtrackButton__MiEe0 styles_soundtrackButton__D5WNc" href="/film/326/tracks/"
+                                  data-tid="4113d3fe">soundtracks</a>
+                              </div>
+                            </div>
+                            <div class="styles_trailerContainer__OrL6j styles_section__OVMys">
+                              <div class="film-trailer styles_rootInLight__Cjmob styles_rootSmSize__SXey8" data-tid="cc89b13d">
+                                <div role="button" tabindex="0" class="styles_previewWithAction__24bFH styles_preview__ruOp9">
+                                  <img class="styles_previewImg__zhMic image styles_root__DZigd" alt="Трейлер (русский язык)"
+                                    src="//avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/3140196bedce7c7577c907d590906975/100x64_3"
+                                    srcset="//avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/3140196bedce7c7577c907d590906975/100x64_3 1x, //avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/3140196bedce7c7577c907d590906975/600x380 2x"
+                                    data-tid="d813cf42">
+                                  <div class="styles_previewInfo__fZqll styles_mainTrailerPreviewInfo__6fFSL">
+                                    <button type="button" class="styles_root__2V17R" data-tid="f1f187d8">Трейлер</button><span
+                                      class="styles_duration__BiWBm">2:17</span>
+                                  </div>
+                                </div><a class="styles_title__vd96O" href="/film/326/video/12799/">Трейлер (русский
+                                  язык)</a><span class="styles_date__d5xwh">20 мая 2009</span>
+                              </div>
+                            </div>
+                            <div class="styles_userControlsContainer__iYP9P styles_section__OVMys">
+                              <div class="styles_controlContainer__5hjSk" data-tid="5310ddc0">
+                                <div class="styles_foldersMenu__R90ST styles_root__g0CT9" data-tid="4a36b453">
+                                  <div class="styles_root__VEPvG styles_buttonSet____zRE" data-tid="62abee53">
+                                    <button
+                                      class="styles_button__MpYNC styles_listToWatchButton__N_ywG styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn">Буду
+                                      смотреть</button><button
+                                      class="styles_button__MpYNC styles_root__v9qoq styles_rootLight__njjLZ styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                        class="styles_tooltip__BZYE_" data-tid="d43912a6">Добавить в список</span></button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_rootLight__C8Tx2 styles_root__dZcuU" data-tid="e5bec5b3">
+                                <a href="/film/326/folders/" class="styles_linkLight__etoyZ styles_link___yiZO">Все папки
+                                  пользователей</a>
+                              </div>
+                            </div>
+                            <div class="styles_socialControlsContainer__7mYQK">
+                              <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim" data-tid="893da4ad">
+                                  <div class="styles_share__4uBuh styles_root__MJ3vO" data-tid="755217e">
+                                    <div id="film-share-buttons"></div>
+                                    <div class="styles_root__vr1TL" data-tid="7cfcb140">
+                                      <span class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                <div
+                                  class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_root__wNLLi styles_feedbackButtons__i2cPM"
+                                  data-tid="893da4ad">
+                                  <div class="styles_wrapper__rcDa_" data-tid="d43e8a06">
+                                    <button type="button" class="styles_buttonError__P0JjC styles_button__qRXLB">Нашли
+                                      ошибку?</button><button type="button"
+                                      class="styles_buttonInfo__gH8CS styles_button__qRXLB">Добавить инфо</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT styles_delimiter__rPlVI"></div>
+                      <div class="styles_column__r2MWX styles_md_17__FaWtp styles_lg_21__YjFTk styles_column__5dEFP"
+                        data-tid="893da4ad">
+                        <div class="styles_main__vjk2Q styles_main__ZXV8U">
+                          <div class="styles_root__4VfvJ styles_basicInfoSection__EiD2J" data-tid="bb43fc51">
+                            <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                                <div class="styles_header__mzj3d">
+                                  <div class="styles_title__hTCAr" data-tid="b97a4e4c">
+                                    <h1
+                                      class="styles_title__65Zwx styles_root__l9kHe styles_root__5sqsd styles_rootInLight__juoEZ"
+                                      itemprop="name"><span data-tid="75209b22">Побег из Шоушенка (1994)</span></h1>
+                                    <div class="styles_root__LIL2v styles_rootInLight__YFjWB" data-tid="7cdbd36a">
+                                      <span class="styles_originalTitle__JaNKM" data-tid="eb6be89">The Shawshank
+                                        Redemption</span><span
+                                        class="styles_rootSmallFaded__LiPsm styles_rootSmallFadedInLight__eENN6"
+                                        data-tid="5c1ffa33">16+</span>
+                                    </div>
+                                  </div>
+                                  <div class="styles_buttons__SNIXo">
+                                    <div class="styles_buttonsContainer__HREZO" data-tid="ebd410f">
+                                      <div class="styles_button__tQYKG">
+                                        <div class="style_root__BmiQ7" data-tid="be0d3e42">
+                                          <button
+                                            class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_withIconLeft__xpAII"
+                                            title="Буду смотреть"><span class="style_iconLeft__vU_kH" data-tid="c8f29373"><span
+                                                class="style_icon__QLJtP style_iconLight__o7Xai"></span></span>Буду
+                                            смотреть</button>
+                                        </div>
+                                      </div>
+                                      <div class="styles_button__tQYKG">
+                                        <div class="style_root__eRD4o" data-tid="17569662">
+                                          <div class="style_root__Bt5S1" data-tid="818a5033">
+                                            <button
+                                              class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_withIconLeft__xpAII style_onlyIcon__D09QE"><span
+                                                class="style_iconLeft__vU_kH" data-tid="c8f29373"><span
+                                                  class="style_icon__V3VQE style_dropdownButtonIconLight__A2zd0"
+                                                  data-tid="e07f9f7b"></span></span></button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_watchingServices__0VLui">
+                                    <div data-tid="e8c5d94f">
+                                      <div class="style_header__ZPNFN" data-tid="c456f2ce">
+                                        <h3
+                                          class="film-page-section-title styles_rootTitle__2g8Sk style_title__DoU6X styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                          <div class="styles_titleWithMoreItem__rTA7s" data-tid="6a319a9e">
+                                            Где смотреть<span class="styles_moreItem__U5bzS">3</span>
+                                          </div>
+                                        </h3><button
+                                          class="style_toggleButton__QSI86 style_toggleButtonLight__Y82uX style_toggleButtonShown__K6ncs"
+                                          aria-label="Свернуть" type="button"></button>
+                                      </div>
+                                      <div class="style_contentWrapper__iT6JH style_isShownByDefault__Egt0Q"
+                                        data-tid="d0682e1e">
+                                        <div class="style_content__L6r_p style_isShown__juLBS">
+                                          <div class="" data-tid="c456f2ce">
+                                            <div class="style_item__coMvy" data-tid="c456f2ce">
+                                              <a href="https://www.ivi.ru/watch/87706?utm_source=yandex&amp;utm_medium=wizard"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootLight__5uLlo" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig"
+                                                    srcset="//avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig 1x, //avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig 2x"
+                                                    data-tid="d813cf42"></span><span class="styles_title__434hO">IVI</span></a>
+                                            </div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce">
+                                              <a href="https://kion.ru/video/movie/509646606?utm_source=yandex&amp;utm_medium=wizard"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootLight__5uLlo" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig"
+                                                    srcset="//avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig 1x, //avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig 2x"
+                                                    data-tid="d813cf42"></span><span class="styles_title__434hO">KION</span></a>
+                                            </div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce">
+                                              <a href="https://tv.apple.com/ru/movie/%D0%BF%D0%BE%D0%B1%D0%B5%D0%B3-%D0%B8%D0%B7-%D1%88%D0%BE%D1%83%D1%88%D0%B5%D0%BD%D0%BA%D0%B0/umc.cmc.459n4f98t82t8ommdoa7ebnny"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootLight__5uLlo" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig"
+                                                    srcset="//avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig 1x, //avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig 2x"
+                                                    data-tid="d813cf42"></span><span class="styles_title__434hO">Apple
+                                                  TV</span></a>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb" data-tid="893da4ad">
+                                <div class="styles_root__lMV74 styles_filmRating__H_B11" data-tid="86be324">
+                                  <div class="film-rating styles_root__7rVf_ styles_rootMSize__B8Ch0 styles_rootInLight__4w53g"
+                                    data-tid="71598065">
+                                    <div class="styles_ratingValue__UO6Zl styles_rootMSize__B8Ch0">
+                                      <div class="styles_valueBlock___nWKb">
+                                        <span class="styles_value__N2Vzt"><span
+                                            class="film-rating-value styles_rootPositive__mLBSO">9.1</span></span>
+                                      </div>
+                                      <div class="styles_countBlock__jxRDI">
+                                        <span class="styles_count__iOIwD">827 191 оценка</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_kinopoiskRatingSnippet__tqtsG">
+                                    <div class="style_root__tg2Nx" data-tid="410c06ef">
+                                      <button
+                                        class="style_button__LAvI6 style_buttonMedium__Z93fP style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_fullWidth__ib6MF">Оценить
+                                        фильм</button>
+                                    </div>
+                                  </div>
+                                  <div class="styles_reviewsLink__5xOtO">
+                                    <div class="styles_reviewCountLight__XNZ9P styles_reviewCount__w_RrM" data-tid="d87cf2dd">
+                                      586 рецензий
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                                <h3
+                                  class="film-page-section-title styles_rootTitle__2g8Sk styles_tableHeader__HdxpN styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                  О фильме</h3>
+                                <div class="" data-test-id="encyclopedic-table" data-tid="bd126b5e">
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Год производства
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="cfbe5a01">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/lists/movies/year--1994/?b=films&amp;b=top">1994</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Страна
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/lists/movies/country--1/?b=films&amp;b=top" data-tid="603f73a4">США</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Жанр
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__5PEXQ"
+                                      data-tid="28726596">
+                                      <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                        <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                          href="/lists/movies/genre--drama/?b=films&amp;b=top" data-tid="603f73a4">драма</a>
+                                      </div><a href="/film/326/keywords/"
+                                        class="styles_linkDark__7m929 styles_link__3QfAk keywords">слова</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Слоган
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueDark__BCk93 styles_value__g6yP4">
+                                        «Страх - это кандалы. Надежда - это свобода»
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Режиссер
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/24262/"
+                                        data-tid="603f73a4">Фрэнк Дарабонт</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Сценарий
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/24262/"
+                                        data-tid="603f73a4">Фрэнк Дарабонт</a>, <a
+                                        class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/24263/"
+                                        data-tid="603f73a4">Стивен Кинг</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Продюсер
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/102292/"
+                                        data-tid="603f73a4">Лиз Глоцер</a>, <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/name/25906/" data-tid="603f73a4">Дэвид В. Лестер</a>, <a
+                                        class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/102293/"
+                                        data-tid="603f73a4">Ники Марвин</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Оператор
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/258609/"
+                                        data-tid="603f73a4">Роджер Дикинс</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Композитор
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/608629/"
+                                        data-tid="603f73a4">Томас Ньюман</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Художник
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/137866/"
+                                        data-tid="603f73a4">Теренс Марш</a>, <a
+                                        class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/5838509/"
+                                        data-tid="603f73a4">Soheil</a>, <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/name/1998853/" data-tid="603f73a4">Питер Лэндсдаун Смит</a>, <a
+                                        href="/film/326/cast/who_is/design/"
+                                        class="styles_linkDark__7m929 styles_link__3QfAk">...</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Монтаж
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/1986116/"
+                                        data-tid="603f73a4">Ричард Фрэнсис-Брюс</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Бюджет
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="cfbe5a01">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/film/326/box/">${'$'}25&nbsp;000&nbsp;000</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Сборы в США
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                                      data-tid="41068c56">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/film/326/box/">${'$'}28&nbsp;341&nbsp;469</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Сборы в мире
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                                      data-tid="41068c56">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/film/326/box/">+ ${'$'}77&nbsp;218
+                                        = ${'$'}28&nbsp;418&nbsp;687</a><a href="/film/326/box/"
+                                        class="styles_linkDark__7m929 styles_link__3QfAk">сборы</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Зрители
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="328581d6">
+                                      <span class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                        data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-1.gif"
+                                          alt="США" class="styles_icon__tVSsA">6.7 млн </span>, <span
+                                        class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                        data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-15.gif"
+                                          alt="Испания" class="styles_icon__tVSsA">1.2 млн </span>, <span
+                                        class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                        data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-3.gif"
+                                          alt="Германия" class="styles_icon__tVSsA">427.2 тыс </span>, <a
+                                        href="/film/326/dates/" class="styles_linkDark__7m929 styles_link__3QfAk">...</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Сборы в России
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                                      data-tid="41068c56">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                        href="/film/326/box/">${'$'}87&nbsp;432</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Премьера в Росcии
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="ca30f216">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/premiere/ru/2019/to/326/#326"
+                                        data-tid="3aaab4fd">24 октября 2019</a>,&nbsp;<a
+                                        class="styles_linkDark__7m929 styles_link__3QfAk" href="/lists/m_act[company]/331/"
+                                        data-tid="3aaab4fd">«Иноекино»</a><span class="styles_stickers__hGaZH"></span>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Премьера в мире
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc">
+                                      <a class="styles_linkDark__7m929 styles_link__3QfAk" href="/film/326/dates/"
+                                        data-tid="603f73a4">10 сентября 1994</a>, <a href="/film/326/dates/"
+                                        class="styles_linkDark__7m929 styles_link__3QfAk">...</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Релиз на DVD
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueDark__BCk93 styles_value__g6yP4">
+                                        1 сентября 1999, «Videogram»
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Релиз на Blu-ray
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueDark__BCk93 styles_value__g6yP4">
+                                        27 августа 2009, «Союз-Видео»
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Возраст
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                                      data-tid="b7fd8541">
+                                      <a class="styles_restrictionLink__iy4n9"><span
+                                          class="styles_rootHighContrast__Bevle styles_rootHighContrastInLight__513Hu"
+                                          data-tid="5c1ffa33">16+</span></a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Рейтинг MPAA
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                                      data-tid="b7fd8541">
+                                      <a class="styles_restrictionLink__iy4n9" href="/film/326/rn/R/"><span
+                                          class="styles_rootHighContrast__Bevle styles_rootHighContrastInLight__513Hu"
+                                          data-tid="5c1ffa33">R</span><span
+                                          class="styles_restrictionDescription__4j5Pk styles_valueDark__BCk93 styles_value__g6yP4">лицам
+                                          до 17 лет обязательно присутствие взрослого</span></a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                      Время
+                                    </div>
+                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueDark__BCk93 styles_value__g6yP4">
+                                        142 мин. / 02:22
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb" data-tid="893da4ad">
+                                <div class="styles_mainSide__qVMH4 styles_mainSideWithTopList__R4sMm">
+                                  <div class="film-crew-block styles_filmCrew__tx5Wt" data-tid="f984424">
+                                    <div class="styles_actors__wn_C4" data-tid="38ecf27e">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                        <a href="/film/326/cast/" class="styles_link__KtvyW" data-tid="6a319a9e">В главных
+                                          ролях</a></h3>
+                                      <ul class="styles_list___ufg4">
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/7987/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Тим Роббинс</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/6750/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Морган Фриман</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/23481/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Боб Гантон</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/24267/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Уильям Сэдлер</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/20802/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Клэнси Браун</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/8531/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Гил Беллоуз</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/47327/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Марк Ролстон</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/50162/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Джеймс Уитмор</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/24264/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Джеффри ДеМанн</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/63758/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Ларри Бранденбург</a></li>
+                                      </ul><a href="/film/326/cast/"
+                                        class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">71 актер</a>
+                                    </div>
+                                    <div data-tid="38ecf27e">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                        <a href="/film/326/cast/who_is/voice/" class="styles_link__KtvyW"
+                                          data-tid="6a319a9e">Роли дублировали</a></h3>
+                                      <ul class="styles_list___ufg4">
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/1826342/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Иван Литвиненко</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/1781077/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Диомид Виноградов</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/1608429/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Александр Носков</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/701366/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Игорь Старосельцев</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                            href="/name/280829/" class="styles_link__Act80" itemprop="actor"
+                                            data-tid="d4e8d214">Юрий Маляров</a></li>
+                                      </ul><a href="/film/326/cast/who_is/voice/"
+                                        class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">27 актеров</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_root__b_uZM styles_awards__stpdy" data-tid="8986781d">
+                                    <a href="/film/326/awards/" class="styles_link__J0S43 styles_linkOscar__ygbHO"
+                                      data-tid="cbdd8e90"><img class="image styles_root__DZigd"
+                                        src="//st.kp.yandex.net/images/movies/awardOscarGray.png" data-tid="d813cf42"><span
+                                        class="styles_nominationCount__Lf_e1">7</span></a>
+                                    <div class="styles_popover__08Mlf styles_root__SeBrp" data-tid="e30ff91d">
+                                      <div class="styles_nominations__I5ywE">
+                                        <h3
+                                          class="film-page-section-title styles_rootTitle__2g8Sk styles_title__8qqmP styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                          <a href="/film/326/awards/" class="styles_link__KtvyW" data-tid="6a319a9e">Оскар<span
+                                              class="styles_moreItem__U5bzS">7</span></a></h3>
+                                        <ul class="styles_root__GOA2M" data-tid="ae580d90">
+                                          <li><span class="styles_year__jgPZo">1995</span><span
+                                              class="styles_listTitle__8bDJP">Номинации</span></li>
+                                          <li data-tid="b4b29a33"><span class="styles_year__jgPZo"></span>
+                                            <div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучший фильм
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучшая мужская роль
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучший адаптированный сценарий
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучшая работа оператора
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучший звук
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучший монтаж
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">
+                                                  Лучший оригинальный саундтрек
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </li>
+                                        </ul><a href="/film/326/awards/" class="styles_allAwardsLink__6vgYm"
+                                          data-tid="935823d">Все награды</a>
+                                      </div>
+                                      <div class="styles_mainAward__Riz_k">
+                                        <a href="/film/326/awards/" class="styles_link__J0S43 styles_linkOscar__ygbHO"
+                                          data-tid="cbdd8e90"><img class="image styles_root__DZigd"
+                                            src="//st.kp.yandex.net/images/movies/awardOscarGray.png" data-tid="d813cf42"><span
+                                            class="styles_nominationCount__Lf_e1">7</span></a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="styles_root__2kxYy" data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e" data-tid="893da4ad">
+                              </div>
+                            </div>
+                            <div class="styles_root__2kxYy styles_topLine__xigow styles_topLineUserNote__hxKqF"
+                              data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="styles_root__B1q5W styles_rootLight___QD_Q styles_root__axj8R" data-tid="21855542">
+                  <div class="styles_root__UtArQ" data-tid="3716659c">
+                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e styles_column__5dEFP"
+                        data-tid="893da4ad">
+                        <div class="styles_main__vjk2Q styles_additionalInformationSection__GmCD7">
+                          <div class="styles_root__KtmEB" data-tid="37b61dba">
+                            <div data-tid="e0411e82">
+                              <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                            </div>
+                          </div><span id="film-details-info" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div data-tid="e0411e82">
+                              <div class="film-details-block styles_root__FF738" data-tid="71e757c">
+                                <div class="styles_tabsSection__aKq4_">
+                                  <div class="styles_root__rVp2r" data-tid="3855337e">
+                                    <div class="styles_itemsSpoiler__ROHvQ styles_ssr__ytsd7" data-tid="de3d23c9">
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_itemActive__Nd9PE styles_item__CGufh"
+                                          data-tid="b92ae11f">
+                                          <span class="styles_itemActive__S4PQM styles_item__wPOY6">Обзор</span>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/awards/">Награды</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/dates/">Премьеры</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/stills/">Изображения</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/video/">Трейлеры</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/studio/">Студии</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/other/">Связи</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/326/reviews/">Рецензии</a>
+                                        </div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f">
+                                          <span class="styles_itemDefault__nPthf styles_item__wPOY6">Еще...</span>
+                                          <div class="styles_dropDownContainer__g27mF">
+                                            <div class="styles_dropDown__QqORT styles_dropDown__wMbnB">
+                                              <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                data-tid="b92ae11f">
+                                                <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                  href="/film/326/sites/">Сайты</a>
+                                              </div>
+                                              <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                data-tid="b92ae11f">
+                                                <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                  href="/film/326/tracks/">Саундтреки</a>
+                                              </div>
+                                              <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                data-tid="b92ae11f">
+                                                <a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                  href="/film/326/subscribe/">Подписка на обновления</a>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="styles_synopsisSection__nJoAj">
+                                  <div class="styles_filmSynopsis__Cu2Oz" data-tid="7f916518">
+                                    <p class="styles_paragraph__wEGPz" data-tid="bbb11238">Бухгалтер Энди Дюфрейн обвинён в
+                                      убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он
+                                      сталкивается с жестокостью и беззаконием, царящими по обе стороны решётки. Каждый, кто
+                                      попадает в эти стены, становится их рабом до конца жизни. Но Энди, обладающий живым умом и
+                                      доброй душой, находит подход как к заключённым, так и к охранникам, добиваясь их особого к
+                                      себе расположения.</p>
+                                  </div>
+                                </div>
+                                <div class="styles_filmRatingSection___Sph9">
+                                  <div class="" data-tid="af0b971c">
+                                    <h3
+                                      class="film-page-section-title styles_rootTitle__2g8Sk styles_title__vtVG_ styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                      Рейтинг фильма</h3>
+                                    <div class="styles_content__QYDgA">
+                                      <div class="styles_formContainer__yBeUw">
+                                        <form class="styles_form__2pcvP styles_form__Bw8gI film-rate-form" data-tid="ad886728">
+                                          <label class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="1" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="1"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="2" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="2"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="3" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="3"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="4" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="4"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="5" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="5"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="6" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="6"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="7" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="7"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="8" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="8"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="9" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="9"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv" data-value="10"
+                                            data-tid="5d365105"><input type="radio" class="styles_input__SRM0B" name="star"
+                                              value="10"><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span><span style="width:11%"
+                                                class="styles_partialIcon__PpsMw styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label>
+                                        </form>
+                                        <div class="styles_buttons__dSk8l">
+                                          <button
+                                            class="styles_scrollToAddReviewButton__GAfqB styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                              class="styles_tooltip__BZYE_" data-tid="d43912a6">Написать рецензию</span>Написать
+                                            рецензию</button>
+                                        </div>
+                                      </div>
+                                      <div class="styles_ratingContainer__RhJ96">
+                                        <div>
+                                          <div
+                                            class="film-rating styles_root__7rVf_ styles_rootLSize__X4aDt styles_rootInLight__4w53g"
+                                            data-tid="71598065">
+                                            <div class="styles_ratingValue__UO6Zl styles_rootLSize__X4aDt">
+                                              <div class="styles_valueBlock___nWKb">
+                                                <span class="styles_value__N2Vzt"><a
+                                                    class="film-rating-value styles_rootPositive__mLBSO styles_rootLink__mm0kW"
+                                                    href="/film/326/votes/">9.1</a></span>
+                                              </div>
+                                              <div class="styles_countBlock__jxRDI">
+                                                <span class="styles_count__iOIwD">827 191 оценка</span><span
+                                                  class="styles_count__iOIwD">
+                                                  <div class="film-sub-rating" data-tid="3d4f49c8">
+                                                    <span class="styles_valueSection__0Tcsy">IMDb
+                                                      <!-- -->:
+                                                      <!-- -->9.30
+                                                    </span><span class="styles_count__89cAz">2 578 376 оценок</span>
+                                                  </div>
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="styles_criticRatingSection__rlcU9">
+                                  <div class="styles_root__i6At7" data-tid="f914d65f">
+                                    <div class="styles_ratingBar__W5otN" data-tid="9f39fdf1">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_header__I8hG1 styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                                        Рейтинг кинокритиков в мире</h3>
+                                      <div class="styles_filmRatingBar__Mks7X styles_ratingBar__NSzsB styles_withValue__PEUCo"
+                                        data-tid="d610b8e8">
+                                        <div class="styles_greenBar__NAQmT styles_bar__7hk5H" style="flex:91;min-width:30px">
+                                          75
+                                        </div>
+                                        <div class="styles_redBar__b_rlR styles_bar__7hk5H" style="flex:9;min-width:30px">
+                                          7
+                                        </div>
+                                      </div>
+                                      <div class="styles_actionBar__6SGOg">
+                                        <div class="styles_actionBarLeft__rwQsY">
+                                          <div
+                                            class="film-rating styles_root__7rVf_ styles_rootSSize__sQJqB styles_rootInLight__4w53g"
+                                            data-tid="71598065">
+                                            <div class="styles_ratingValue__UO6Zl styles_rootSSize__sQJqB">
+                                              <div class="styles_valueBlock___nWKb">
+                                                <span class="styles_value__N2Vzt"><span
+                                                    class="film-rating-value styles_rootPositive__mLBSO">91%</span></span>
+                                              </div>
+                                              <div class="styles_countBlock__jxRDI">
+                                                <span class="styles_count__iOIwD">82 оценки<span
+                                                    class="styles_starValue__tchEE">8.4</span></span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="styles_ratingBar__W5otN" data-tid="9f39fdf1">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_header__I8hG1 styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                                        <a href="/film/326/press/" class="styles_link__KtvyW" data-tid="6a319a9e">В России</a>
+                                      </h3>
+                                      <div class="styles_filmRatingBar__Mks7X styles_ratingBar__NSzsB styles_withValue__PEUCo"
+                                        data-tid="d610b8e8">
+                                        <div class="styles_greenBar__NAQmT styles_bar__7hk5H" style="flex:100;min-width:30px">
+                                          1
+                                        </div>
+                                        <div class="styles_redBar__b_rlR styles_bar__7hk5H" style="flex:0"></div>
+                                      </div>
+                                      <div class="styles_actionBar__6SGOg">
+                                        <div class="styles_actionBarLeft__rwQsY">
+                                          <div
+                                            class="film-rating styles_root__7rVf_ styles_rootSSize__sQJqB styles_rootEmptyValue___oY43 styles_rootInLight__4w53g"
+                                            data-tid="71598065">
+                                            <div class="styles_ratingValue__UO6Zl styles_rootSSize__sQJqB">
+                                              <div class="styles_valueBlock___nWKb">
+                                                <span class="styles_value__N2Vzt"><span
+                                                    class="film-rating-value styles_rootUnknown__cvNn1">–</span></span>
+                                              </div>
+                                              <div class="styles_countBlock__jxRDI">
+                                                <span class="styles_count__iOIwD">1 оценка</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="film-similar_movies" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__AphAt" data-tid="718c3e1">
+                              <span class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__TDvSy">
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="film-trailers" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__NaGgU" data-tid="388eb013">
+                              <span class="styles_title__DqgWT styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7" data-tid="893da4ad">
+                                  <div class="" data-tid="2e582843">
+                                    <span class="styles_preview__ruOp9 styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span>
+                                  </div>
+                                </div>
+                                <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7" data-tid="893da4ad">
+                                  <div class="" data-tid="2e582843">
+                                    <span class="styles_preview__ruOp9 styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="film-facts" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__DA3xg" data-tid="f66307a6">
+                              <span class="styles_title__juLbV styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span><span class="styles_trivias__dYVWd styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                            </div>
+                          </div><span id="film-media-posts" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__5UEhB" data-tid="bb544b3">
+                              <span class="styles_title__G7P6B styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__a_hbM">
+                                <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f">
+                                  <span class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  <div class="styles_content__mbyG4">
+                                    <span class="styles_title__c_Mad styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_subtitle__1U4oC styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__RRcaK styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  </div>
+                                </div>
+                                <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f">
+                                  <span class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  <div class="styles_content__mbyG4">
+                                    <span class="styles_title__c_Mad styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_subtitle__1U4oC styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__RRcaK styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  </div>
+                                </div>
+                                <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f">
+                                  <span class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  <div class="styles_content__mbyG4">
+                                    <span class="styles_title__c_Mad styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_subtitle__1U4oC styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__RRcaK styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="today-in-cinema-block" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__AphAt" data-tid="718c3e1">
+                              <span class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__TDvSy">
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509">
+                                  <span class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="film-critic-reviews" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__IDbib" data-tid="590d7889">
+                              <span class="styles_title__1_WZz styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__pAWGW">
+                                <span class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                                  data-tid="ad14a6be">‌</span><span
+                                  class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                                  data-tid="ad14a6be">‌</span><span
+                                  class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div id="user-reviews" class="styles_root__bpW7N" data-tid="7a20dd1e">
+                            <div data-tid="e0411e82">
+                              <span id="film-users-reviews" style="height:0" data-tid="32753834"></span>
+                              <div style="min-width:1px" data-tid="517927c6">
+                                <div class="styles_root__rly1E" data-tid="a4f2984f">
+                                  <span class="styles_title__4zZWY styles_root__llf0m styles_rootLg__v_8HV styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_button__hH7LK styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_review__qp_BA styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT"></div>
+                      <div
+                        class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP styles_sidebarSection__q_p1Y"
+                        data-tid="893da4ad">
+                        <div class="styles_sidebar__mZOfP">
+                          <div class="" data-tid="43d5b8ef">
+                            <div class="" data-tid="e810e001">
+                              <div id="foxadbanner_200_200_film" class="styles_container__XXCpX" data-tid="9501d3f4"></div>
+                            </div>
+                          </div>
+                          <div class="styles_root____5P5" data-tid="14985c6b">
+                            <div class="styles_header__iErfu">
+                              <nav class="styles_nav__gHl7k">
+                                <button tabindex="0" type="button" class="styles_root__5QqzE styles_rootSelected__oVvef"
+                                  data-tid="1f6a4ca6">Друзья</button>
+                              </nav>
+                              <div class="styles_rating__sV8yH"></div>
+                            </div>
+                            <div class="styles_root__sGbD8" data-tid="c17d21c6">
+                              <button tabindex="0" type="button" class="styles_link__xVM_W">Найдите друзей</button>,
+                              зарегистрированных на Кинопоиске, и здесь появятся оценки, которые ваши друзья поставили этому
+                              фильму...
+                            </div>
+                          </div><span id="movie-lists-relations" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__UkkRY" data-tid="d34ff620">
+                              <span
+                                class="styles_skeletonTitle__zDdnJ styles_title__zJKfl styles_root__llf0m styles_rootSm__Nt66I styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf">
+                                  <span class="styles_title__4qO8I styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf">
+                                  <span class="styles_title__4qO8I styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf">
+                                  <span class="styles_title__4qO8I styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf">
+                                  <span class="styles_title__4qO8I styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf">
+                                  <span class="styles_title__4qO8I styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="soundtrack-section" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div data-tid="373566cd">
+                              <span
+                                class="styles_skeletonTitle__uDC2G styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_skeletonIframe__bRjU0">
+                                <div class="styles_skeletonCoverWrap__HoP_s">
+                                  <span class="styles_skeletonPicture__aal6r styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                </div>
+                                <div class="styles_skeletonContent__sfMYz">
+                                  <span class="styles_skeletonAlbumTitle__ZYn6S styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSubtitle__wUNb_ styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_skeletonPlayButton___gNe9 styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="styles_sticky__S5Rjy" data-tid="5da1a3ef">
+                            <div class="styles_root__TryBS">
+                              <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="styles_footerContainer__Mk60T styles_baseContainer__8XBMw">
+                <footer class="footer styles_rootDark__mtmaQ styles_root__sUtn2" data-tid="995d0553">
+                  <section class="styles_root__kcCHj social-icons styles_socialMenu__gLaiH" data-tid="39df70f">
+                    <a class="styles_icon__cHky_" href="https://vk.com/kinopoisk" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/118781/0ae3d1ca27d3794204beec7d3810025f8c2b7e87/svg"
+                        alt="https://vk.com/kinopoisk" loading="lazy" data-tid="9107e4a2"></a><a class="styles_icon__cHky_"
+                      href="https://www.facebook.com/kinopoisk" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/56833/0baf23635975a9f1b481833f37653aa2efceb3a1/svg"
+                        alt="https://www.facebook.com/kinopoisk" loading="lazy" data-tid="9107e4a2"></a><a
+                      class="styles_icon__cHky_" href="https://twitter.com/kinopoiskru" target="_blank"
+                      rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/61205/97123f0bc0c689932a2fb6b62d3ab8ce04d7e936/svg"
+                        alt="https://twitter.com/kinopoiskru" loading="lazy" data-tid="9107e4a2"></a><a
+                      class="styles_icon__cHky_" href="https://telegram.me/kinopoisk" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/56833/9f570502e378d5e28a5a173a273fa811c4490a73/svg"
+                        alt="https://telegram.me/kinopoisk" loading="lazy" data-tid="9107e4a2"></a><a class="styles_icon__cHky_"
+                      href="https://www.instagram.com/kinopoisk/" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/50064/c6b1a28b4bf580d4cf96ec7f262aace67a4dde2e/svg"
+                        alt="https://www.instagram.com/kinopoisk/" loading="lazy" data-tid="9107e4a2"></a><a
+                      class="styles_icon__cHky_" href="https://www.youtube.com/user/kinopoisk" target="_blank"
+                      rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/128809/65fe1abdd405eb82aec7490588a1ec6745d9ab87/svg"
+                        alt="https://www.youtube.com/user/kinopoisk" loading="lazy" data-tid="9107e4a2"></a>
+                  </section>
+                  <ul class="footer__content-links styles_contentMenu__OgjQP">
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://yandex.ru/jobs/vacancies/dev/?from=kinopoisk&amp;services=kinopoisk" target="_blank"
+                        rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                        data-tid="2e9b873">Вакансии</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://yandex.ru/adv/products/display/kinopoiskmedia" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Реклама</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a href="/docs/usage/"
+                        target="_blank" rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                        data-tid="2e9b873">Соглашение</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://yandex.ru/support/kinopoisk/index.html" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Справка</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="/media/rubric/19/" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Блог</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://www.surveygizmo.eu/s3/90259271/" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Участие в исследованиях</a>
+                    </li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://kinopoisk.userecho.com/" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Предложения</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2"><button type="button"
+                        class="styles_contentButton__Yfvdh">Служба поддержки</button></li>
+                  </ul>
+                  <div class="styles_root__a_qyh styles_mobileAppsMenu__E1mGj styles_rootDark__ZR7rh" data-tid="358cef48">
+                    <a class="styles_store__JFbwQ"
+                      href="https://10267.redirect.appmetrica.yandex.com/mainView?appmetrica_tracking_id=170895231946863928"
+                      target="_blank" rel="noopener noreferrer" data-tid="7777859c"><img
+                        src="//avatars.mds.yandex.net/get-bunker/50064/9de0796ad18834328b4d4858b524bf8ce6f31f98/svg"
+                        alt="Загрузить приложение" loading="lazy"></a><a class="styles_store__JFbwQ"
+                      href="https://redirect.appmetrica.yandex.com/serve/603240792315703184" target="_blank"
+                      rel="noopener noreferrer" data-tid="7777859c"><img
+                        src="//avatars.mds.yandex.net/get-bunker/994123/d4d889eb60c34ed8ca7d3c0fe965b8327e229fcf/svg"
+                        alt="Загрузить приложение" loading="lazy"></a><a class="styles_store__JFbwQ"
+                      href="https://redirect.appmetrica.yandex.com/serve/1179706852124993595" target="_blank"
+                      rel="noopener noreferrer" data-tid="7777859c"><img
+                        src="//avatars.mds.yandex.net/get-bunker/128809/1b6561563c22de1014279a528719f4f7d9360296/svg"
+                        alt="Загрузить приложение" loading="lazy"></a>
+                  </div>
+                  <section class="styles_bottomSection__qx7AY footer__bottom">
+                    <div class="styles_bottomSectionInfo__0XSte footer__bottom-info">
+                      <div>
+                        <span class="styles_year__tYQPp footer__bottom-info-year">©&nbsp;2003 —
+                          <!-- -->2022
+                          <!-- -->,
+                        </span><a class="styles_bottomSectionInfoLink__Z8Szl footer__bottom-info-link"
+                          href="https://www.kinopoisk.ru/" target="_blank" rel="noopener noreferrer"
+                          data-tid="2e9b873">Кинопоиск</a><span class="styles_age__sKz6S footer__bottom-info-age">18
+                          <!-- -->+
+                        </span>
+                      </div>
+                      <div class="styles_infoName__8KP42">
+                        Yandex Service AG
+                      </div>
+                    </div>
+                    <ul class="styles_bottomSectionMenu__kJDDt footer__bottom-links">
+                      <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                          href="https://tv.yandex.ru" target="_blank" rel="noopener noreferrer"
+                          class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Телепрограмма</a>
+                      </li>
+                      <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                          href="https://music.yandex.ru" target="_blank" rel="noopener noreferrer"
+                          class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Музыка</a></li>
+                      <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                          href="https://afisha.yandex.ru" target="_blank" rel="noopener noreferrer"
+                          class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Афиша</a></li>
+                    </ul>
+                    <div class="styles_companySection__2U1gC footer__bottom-company">
+                      <span class="styles_companySectionTitle__UUuEV footer__bottom-company-name">Проект компании</span><a
+                        class="styles_companyLogo__gDzdb footer__bottom-company-logo" href="https://yandex.ru" target="_blank"
+                        rel="noopener noreferrer" data-tid="2e9b873">Яндекс</a>
+                    </div>
+                  </section>
+                </footer>
+              </div><button class="styles_root__p7NQg" type="button" data-tid="ed9136fe"><span
+                  class="styles_iconWrapper__VsEKC"><span class="styles_icon__6tiLC"></span></span></button>
+              <div class="styles_root__yEgpj styles_notifyTooltip__B_TG7" data-tid="2f7f876f"></div>
+            </div>
+            <div class="styles_progress__ZoYH9" hidden data-tid="c2959803">
+              <div class="styles_progressBar__p3Spc"></div>
+            </div>
+          </div>
+        </body>
+
+        </html>
+    """
+
+    private val movie329Html: String = """
+        <!DOCTYPE html>
+        <html>
+
+        <head>
+          <meta name="viewport" content="width=device-width" />
+          <meta charSet="utf-8" />
+          <title data-tid="57f72b5">Список Шиндлера — смотреть онлайн — Кинопоиск</title>
+          <meta name="theme-color" content="#1f1f1f" data-tid="57f72b5" />
+          <meta name="apple-mobile-web-app-capable" content="yes" data-tid="57f72b5" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black" data-tid="57f72b5" />
+          <meta name="apple-mobile-web-app-title" content="Кинопоиск" data-tid="57f72b5" />
+          <meta name="apple-itunes-app" content="app-id=477718890, ct=kp-web, pt=214944, mt=8" data-tid="57f72b5" />
+          <meta name="application-name" content="Кинопоиск" data-tid="57f72b5" />
+          <meta property="fb:app_id" content="121953784483000" data-tid="57f72b5" />
+          <meta property="fb:pages" content="152308956519" data-tid="57f72b5" />
+          <meta property="og:site_name" content="Кинопоиск" data-tid="57f72b5" />
+          <meta name="msapplication-TileColor" content="#000" data-tid="57f72b5" />
+          <meta name="msapplication-TileImage"
+            content="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+            data-tid="57f72b5" />
+          <meta name="msapplication-config" content="//st.kp.yandex.net/public/xml/ieconfig.xml" data-tid="57f72b5" />
+          <link rel="mask-icon"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-16.svg"
+            data-tid="57f72b5" />
+          <link rel="apple-touch-icon-precomposed"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/apple-favicon-152.png"
+            data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-57.png" sizes="57x57"
+            data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-76.png" sizes="76x76"
+            data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-96.png" sizes="96x96"
+            data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-120.png"
+            sizes="120x120" data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-128.png"
+            sizes="128x128" data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+            sizes="144x144" data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-152.png"
+            sizes="152x152" data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-180.png"
+            sizes="180x180" data-tid="57f72b5" />
+          <link rel="icon" type="image/png"
+            href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-196.png"
+            sizes="196x196" data-tid="57f72b5" />
+          <link rel="icon" href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-64.ico"
+            data-tid="57f72b5" />
+          <link rel="search" type="application/opensearchdescription+xml" title="Поиск на kinopoisk.ru" href="/kp_search.xml"
+            data-tid="57f72b5" />
+          <meta name="description"
+            content="История немецкого промышленника, спасшего тысячи жизней во время Холокоста. Драма Стивена Спилберга. Смотрите онлайн на Кинопоиске."
+            data-tid="57f72b5" />
+          <meta name="keywords"
+            content="Список Шиндлера — смотреть онлайн — Кинопоиск Schindler&#x27;s List фильм сериал кино обои фотографии сеансы афиша обзор комментарии рейтинг факты отзывы кадры новости сайт"
+            data-tid="57f72b5" />
+          <link type="application/rss+xml" rel="alternate" title="RSS" href="/news.rss" data-tid="57f72b5" />
+          <link rel="canonical" href="https://www.kinopoisk.ru/film/329/" data-tid="57f72b5" />
+          <meta property="og:title" content="«Список Шиндлера» (Schindler&#x27;s List, 1993)" data-tid="57f72b5" />
+          <meta property="twitter:title" content="«Список Шиндлера» (Schindler&#x27;s List, 1993)" data-tid="57f72b5" />
+          <meta property="og:description"
+            content="История немецкого промышленника, спасшего тысячи жизней во время Холокоста. Драма Стивена Спилберга. Смотрите онлайн на Кинопоиске."
+            data-tid="57f72b5" />
+          <meta property="twitter:description"
+            content="История немецкого промышленника, спасшего тысячи жизней во время Холокоста. Драма Стивена Спилберга. Смотрите онлайн на Кинопоиске."
+            data-tid="57f72b5" />
+          <meta property="og:url" content="https://www.kinopoisk.ru/film/329/" data-tid="57f72b5" />
+          <meta property="og:image"
+            content="https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/131cd299-d338-43dd-848f-22a1e5a4fdb2/1200x630"
+            data-tid="57f72b5" />
+          <meta property="vk:image"
+            content="https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/131cd299-d338-43dd-848f-22a1e5a4fdb2/1200x630"
+            data-tid="57f72b5" />
+          <meta name="twitter:image"
+            content="https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/131cd299-d338-43dd-848f-22a1e5a4fdb2/1200x630"
+            data-tid="57f72b5" />
+          <meta property="og:image:width" content="1200" data-tid="57f72b5" />
+          <meta property="og:image:height" content="630" data-tid="57f72b5" />
+          <meta name="twitter:site" content="kinopoiskru" data-tid="57f72b5" />
+          <meta name="twitter:card" content="summary_large_image" data-tid="57f72b5" />
+          <meta property="og:type" content="website" data-tid="57f72b5" />
+          <link rel="alternate" href="android-app://ru.kinopoisk/https/www.kinopoisk.ru/film/329/" data-tid="57f72b5" />
+          <link rel="alternate" href="ios-app://EK7Z26L6D4.ru.kinopoisk/https/www.kinopoisk.ru/film/329/" data-tid="57f72b5" />
+          <meta name="next-head-count" content="47" />
+          <link rel="preload" as="script" href="https://yandex.ru/ads/system/context.js" crossorigin="anonymous"
+            data-tid="db024bc5" />
+          <link rel="manifest"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/pwa-manifests/production.json"
+            crossorigin="anonymous" data-tid="74a9c6bc" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+            crossorigin="anonymous" data-n-g="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+            crossorigin="anonymous" data-n-p="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+            crossorigin="anonymous" data-n-p="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+            crossorigin="anonymous" data-n-p="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+            crossorigin="anonymous" data-n-p="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+            crossorigin="anonymous" data-n-p="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+            crossorigin="anonymous" data-n-p="" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+            crossorigin="anonymous" />
+          <link rel="preload"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+            as="style" crossorigin="anonymous" />
+          <link rel="stylesheet"
+            href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+            crossorigin="anonymous" /><noscript data-n-css=""></noscript>
+        </head>
+
+        <body class="body" data-tid="f8463833">
+          <div id="__next" data-reactroot="">
+            <div class="styles_root__hSE6c styles_promoPopover__pKHxa" data-tid="d504712e"><button type="button"
+                class="styles_closeButton__LEexp"><span class="styles_closeButtonIcon__w69HE"></span></button></div>
+            <div class="styles_root__vsmL9 styles_wideRoot__JrXG9" data-tid="2781b874">
+              <div class="styles_root__BJH2_ styles_headerContainer__sFBK8" data-tid="1d1e4a8c">
+                <header class="styles_root__jlo2L styles_header__0LyFn styles_rootDark__nQDyF" data-tid="63b05890">
+                  <div class="header-navigation styles_navigation__S8raz styles_navigationDark__x0vdW">
+                    <div class="styles_logoContainer__G47EP">
+                      <div class="styles_root__jfc_s" data-tid="911e2f4d">
+                        <div class=""><button class="styles_root__coHaQ styles_burger__HcbjK" type="button"
+                            data-tid="8ed90190"><span class="styles_icon__J3wes" style="color:#999999"></span></button>
+                          <div class="styles_dropdown__MqT__ styles_dropdownOpen__mTn_V styles_dropdownDefault__KwZHT"
+                            data-tid="585eb7c0">
+                            <div class="styles_dropdownMenu__bouwC styles_dropdownMenu__c7FZ4 styles_dropdownMenuDark__NzGxR">
+                              <div class="styles_navigationMenu__c_jLJ styles_root__RBtQR" data-tid="e500879d"><a href="/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/128809/4d6f5bd4e839b166859243f82e9fdeb3bc910931/svg"
+                                    data-tid="b35288c1" />Главная</a><a href="https://hd.kinopoisk.ru/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/61205/478c72b68bc4ac507483b2676994bbc1df5f05be/svg"
+                                    data-tid="b35288c1" />Онлайн-кинотеатр</a><a href="/lists/categories/movies/1/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/50064/ab24b8099cb4ca11c08b0def91dc5c1d4fd78649/svg"
+                                    data-tid="b35288c1" />Фильмы</a><a href="/lists/categories/movies/3/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/61205/9daeaf410906b5794685b7b5bb25dfd2c647fccf/svg"
+                                    data-tid="b35288c1" />Сериалы</a><a href="/afisha/new/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/118781/ae7fbfc1773a6bbd61ee0154628c6fe14bf6959e/svg"
+                                    data-tid="b35288c1" />Билеты в кино</a><a href="/media/"
+                                  class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                                    class="styles_icon__PXEHs"
+                                    src="https://avatars.mds.yandex.net/get-bunker/118781/960a47a181b1b0a28ceb45a075e64c1a9378442c/svg"
+                                    data-tid="b35288c1" />Медиа</a></div>
+                            </div>
+                          </div>
+                        </div><a href="/" class="styles_root__dYidr styles_logo___bcop" data-tid="d4e8d214"><img
+                            class="styles_img__3hWmL kinopoisk-header-logo__img" alt="Кинопоиск"
+                            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTY0IiBoZWlnaHQ9IjM2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNTguODU5IDE4YzAtNS44ODkgMi45NTQtMTAuNiA4LjI4MS0xMC42IDUuMzI4IDAgOC4yODEgNC43MTEgOC4yODEgMTAuNiAwIDUuODktMi45NTQgMTAuNi04LjI4IDEwLjYtNS4zMjggMC04LjI4Mi00LjcxLTguMjgyLTEwLjZabTguMjgxIDcuNjZjMi4wNzIgMCAyLjk1NC0zLjUzNCAyLjk1NC03LjY1MiAwLTQuMTItLjg4OS03LjY1Mi0yLjk1NC03LjY1Mi0yLjA2NSAwLTIuOTU0IDMuNTMzLTIuOTU0IDcuNjUyLS4wMDcgNC4xMTguODgyIDcuNjUyIDIuOTU0IDcuNjUyWk0zLjg0MyA3Ljd2NS41OTZoLjI5NEw3Ljk4IDcuN2g1LjMybC03LjA5OCA2LjQ3NC4yOTQuMjkzTDE5LjUxIDcuNjkzdjQuNzExTDcuOTczIDE2LjUyM3YuMjkybDExLjUzNy0xLjAyOHY0LjQxOUw3Ljk3MyAxOS4xNzh2LjI5M2wxMS41MzcgNC4xMTh2NC43MTJMNi40OTYgMjEuNTI2bC0uMjk0LjI5MyA3LjA5OCA2LjQ3NEg3Ljk4bC0zLjg0My01LjU5NmgtLjI5NHY1LjU5NkgwVjcuNjg2aDMuODQzVjcuN1ptMTkuMjMgMEgyOC4xbC0uMjk0IDEyLjM2M2guMjk0TDM0LjAxNSA3LjdoNC40Mzh2MjAuNjA4aC01LjAyNmwuMjk0LTEyLjM2NGgtLjI5NEwyNy41MSAyOC4zMDloLTQuNDM4VjcuN1ptMjMuOTU1IDBoLTUuMDI2djIwLjYwOGg1LjAyNnYtOS4xM2g0LjEzN3Y5LjEzaDUuMDI2VjcuN2gtNS4wMjZ2Ny45NTJoLTQuMTM3VjcuN1ptNDUuMjUgMGgtMTQuMTl2MjAuNjA4aDUuMDI3VjExLjIzM2g0LjEzN3YxNy4wNzVoNS4wMjZWNy43Wm0yLjY2IDEwLjNjMC01Ljg4OSAyLjk1NC0xMC42IDguMjgyLTEwLjYgNS4zMiAwIDguMjgxIDQuNzExIDguMjgxIDEwLjYgMCA1Ljg5LTIuOTU0IDEwLjYtOC4yODEgMTAuNi01LjMyIDAtOC4yODItNC43MS04LjI4Mi0xMC42Wm04LjI4MiA3LjY2YzIuMDcyIDAgMi45NTQtMy41MzQgMi45NTQtNy42NTIgMC00LjEyLS44ODktNy42NTItMi45NTQtNy42NTItMi4wNzIgMC0yLjk1NCAzLjUzMy0yLjk1NCA3LjY1MiAwIDQuMTE4Ljg4MiA3LjY1MiAyLjk1NCA3LjY1MlpNMTE5LjE4NyA3LjdoLTUuMDI2djIwLjYwOGg0LjQzOGw1LjkxNi0xMi4zNjRoLjI5NGwtLjI5NCAxMi4zNjRoNS4wMjZWNy43aC00LjQzOGwtNS45MTYgMTIuMzYzaC0uMjk0bC4yOTQtMTIuMzYzWm0yMy42NjkgMTMuNTQxIDQuNzMyLjU4NWMtLjg4OSA0LjEyLTIuOTU0IDYuNzc0LTcuMzY0IDYuNzc0LTUuMzIgMC04LjAxNi00LjcxLTguMDE2LTEwLjYgMC01Ljg4OSAyLjY4OS0xMC42IDguMDE2LTEwLjYgNC4zMTcgMCA2LjQ3NSAyLjY0OSA3LjM2NCA2LjQ3NWwtNC43MzIgMS4xNzdjLS4yOTQtMi4wNjMtMS4xNTUtNC43MS0yLjYzMi00LjcxLTEuNzcxIDAtMi42ODkgMy41MzMtMi42ODkgNy42NTEgMCA0LjA5LjkxOCA3LjY1MiAyLjY4OSA3LjY1MiAxLjQ0OS4wMTUgMi4zMy0yLjM0MSAyLjYzMi00LjQwNFptMTEuODMtMTMuNTRoLTQuNzMydjIwLjYwN2g0LjczMnYtOS4xM2guMjk0bDMuNTQ5IDkuMTNIMTY0bC01LjE3Ny0xMC42TDE2My44NDkgNy43aC01LjAyNmwtMy44NDMgOS4xM2gtLjI5NFY3LjdaIiBmaWxsPSIjZmZmIi8+PC9zdmc+Cg=="
+                            data-tid="79e4350" /></a>
+                      </div>
+                    </div>
+                    <div class="styles_mainContainer__faOVn">
+                      <div class="styles_featureMenuContainer__KbrzA">
+                        <nav class="styles_root__DR_oz kinopoisk-header-featured-menu styles_adaptive__F508O"
+                          data-tid="78f04c5d"><a
+                            class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                            href="https://hd.kinopoisk.ru/" target="_self" data-tid="acc26a70"><img aria-label="presentation"
+                              class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/118781/5e4a451dabd5982b775db20bc084cc215fd0e14a/svg"
+                              srcSet="" data-tid="b35288c1" /><img aria-label="presentation" class="styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/61205/70cc2c1c559189c3139a315b1d06db38faefa2b5/svg"
+                              srcSet="" data-tid="b35288c1" />Онлайн-кинотеатр</a><a
+                            class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                            href="https://www.kinopoisk.ru/special/smarttv_instruction?utm_source=kinopoisk&amp;utm_medium=selfpromo_kp&amp;utm_campaign=button_header"
+                            target="_blank" data-tid="acc26a70"><img aria-label="presentation"
+                              class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/50064/9bd69a8ca16bd1fa7395dba2ab3082c4bebd306c/svg"
+                              srcSet="" data-tid="b35288c1" /><img aria-label="presentation" class="styles_icon__IXP4s"
+                              src="https://avatars.mds.yandex.net/get-bunker/61205/c7ca1a7300068a2cf01c57a1f351ba9d89c20ee3/svg"
+                              srcSet="" data-tid="b35288c1" />Установить на ТВ</a></nav>
+                      </div>
+                      <div class="styles_searchFormContainer__GyAL5">
+                        <div class="styles_searchForm__AIMFU styles_searchFormDefault__QNml_" data-tid="8d7d7cbd">
+                          <form class="styles_form__i86wS" action="/index.php">
+                            <div class="styles_root__dTeXi styles_searchInputElement__qNbS4" data-tid="b0e8f9b"><input
+                                type="text" name="kp_query"
+                                class="styles_input__4vNAb kinopoisk-header-search-form-input__input" autoComplete="off"
+                                aria-label="Фильмы, сериалы, персоны" placeholder="Фильмы, сериалы, персоны" value=""
+                                required="" />
+                              <div class="styles_controlContainer__5VetH kinopoisk-header-search-form-input__control-container">
+                                <a href="/s/" class="styles_advancedSearch__uwvnd" aria-label="advanced-search"
+                                  tabindex="-1"><svg class="styles_advancedSearchIcon__Zxjax" xmlns="http://www.w3.org/2000/svg"
+                                    width="18" height="18" viewBox="0 0 18 18">
+                                    <path fill="#000" fill-rule="evenodd"
+                                      d="M5.995 10.3A2.7 2.7 0 0 1 8.504 12H17v2H8.504a2.7 2.7 0 0 1-5.018 0H1v-2h2.486a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm5.997-8.7A2.7 2.7 0 0 1 14.5 5H17v2h-2.5a2.7 2.7 0 0 1-5.017 0H1V5h8.483a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z">
+                                    </path>
+                                  </svg></a><button type="submit" class="styles_root__CUh_v styles_submit__2AIpj"
+                                  aria-label="submit" tabindex="-1" data-tid="f49ca51f"><svg
+                                    class="styles_icon__1bYKL search-form-submit-button__icon"
+                                    xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                                    <path fill="#000" fill-rule="evenodd"
+                                      d="M12.026 10.626L16 14.6 14.6 16l-3.974-3.974a5.5 5.5 0 1 1 1.4-1.4zM7.5 11.1a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2z">
+                                    </path>
+                                  </svg>Найти</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="styles_userContainer__hLiRQ"><button type="button" class="styles_searchButton__kXYs6"><span
+                          class="styles_searchButtonIconSmall__poB4V"></span></button>
+                      <div class="styles_root__JgDCj" data-tid="1a82203d">
+                        <div><a
+                            class="styles_plusDesktopBrandingButton__X4z6T styles_root__OkfMY styles_padding4x14__J5WqH styles_root__lbhjd styles_rootLight__4o4CJ styles_rootPlus__Xx9Yy"
+                            href="https://hd.kinopoisk.ru/?source=kinopoisk_head_button">Попробовать Плюс</a></div><button
+                          type="button" class="styles_loginButton__LWZQp">Войти</button>
+                      </div>
+                    </div>
+                  </div>
+                </header>
+              </div>
+              <div class="styles_wideContentContainer__lu_K3">
+                <div class="styles_root__B1q5W styles_rootDark__L1f7i styles_root__axj8R" data-tid="21855542">
+                  <div class="styles_background__ME0M5">
+                    <div class="styles_root__QOd_V" data-tid="59e98289">
+                      <div class="styles_root__8tScN styles_cover__e29Y0" data-tid="408432e9"><img
+                          class="styles_image__rXBJa image styles_root__DZigd styles_rootNotLoaded__57tgq"
+                          src="//avatars.mds.yandex.net/get-ott/224348/2a00000161288bb232efc98a98df61677731/1344x756"
+                          srcSet="//avatars.mds.yandex.net/get-ott/224348/2a00000161288bb232efc98a98df61677731/1344x756 1x, //avatars.mds.yandex.net/get-ott/224348/2a00000161288bb232efc98a98df61677731/2688x1512 2x"
+                          data-tid="d813cf42" />
+                        <div class="styles_gradient__ELWDc"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="styles_root__UtArQ" data-tid="3716659c">
+                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP"
+                        data-tid="893da4ad">
+                        <div class="styles_sidebar__mZOfP">
+                          <div class="styles_root__JykRA styles_basicMediaSection__l88k1 styles_basicMediaSectionDark__2YiY5"
+                            data-tid="be907ee0">
+                            <div class="styles_posterContainer__F02wH">
+                              <div class="styles_root__0qoat" data-tid="fe27f3c4"><a class="styles_posterLink__C1HRc"
+                                  href="/film/329/posters/"><img
+                                    class="film-poster styles_root__24Jga styles_rootInDark__64LVq image styles_root__DZigd"
+                                    alt="Список Шиндлера (Schindler&#x27;s List)"
+                                    src="//avatars.mds.yandex.net/get-kinopoisk-image/1773646/b327ada7-d790-49ae-8b24-374497a0980c/300x450"
+                                    srcSet="//avatars.mds.yandex.net/get-kinopoisk-image/1773646/b327ada7-d790-49ae-8b24-374497a0980c/300x450 1x, //avatars.mds.yandex.net/get-kinopoisk-image/1773646/b327ada7-d790-49ae-8b24-374497a0980c/600x900 2x"
+                                    data-tid="d813cf42" /></a><a
+                                  class="styles_soundtrackButton__MiEe0 styles_soundtrackButton__D5WNc" href="/film/329/tracks/"
+                                  data-tid="4113d3fe">soundtracks</a><img
+                                  class="styles_copyrightImg__LB6H4 image styles_root__DZigd"
+                                  src="//avatars.mds.yandex.net/get-ott/1534341/2a0000017eb9b64df57c95a7935c0bc72f94/120x120"
+                                  srcSet="//avatars.mds.yandex.net/get-ott/1534341/2a0000017eb9b64df57c95a7935c0bc72f94/120x120 1x, //avatars.mds.yandex.net/get-ott/1534341/2a0000017eb9b64df57c95a7935c0bc72f94/240x240 2x"
+                                  data-tid="d813cf42" /></div>
+                            </div>
+                            <div class="styles_trailerContainer__OrL6j styles_section__OVMys">
+                              <div class="film-trailer styles_rootInDark__Yb_ii styles_rootSmSize__SXey8" data-tid="cc89b13d">
+                                <div role="button" tabindex="0" class="styles_previewWithAction__24bFH styles_preview__ruOp9">
+                                  <img class="styles_previewImg__zhMic image styles_root__DZigd" alt="Трейлер"
+                                    src="//avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/375bc6bae0eb434df21dedf9f8801206/100x64_3"
+                                    srcSet="//avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/375bc6bae0eb434df21dedf9f8801206/100x64_3 1x, //avatars.mds.yandex.net/get-kino-vod-films-gallery/33804/375bc6bae0eb434df21dedf9f8801206/600x380 2x"
+                                    data-tid="d813cf42" />
+                                  <div class="styles_previewInfo__fZqll styles_mainTrailerPreviewInfo__6fFSL"><button
+                                      type="button" class="styles_root__2V17R" data-tid="f1f187d8">Трейлер</button><span
+                                      class="styles_duration__BiWBm">2:18</span></div>
+                                </div><a class="styles_title__vd96O" href="/film/329/video/7653/">Трейлер</a><span
+                                  class="styles_date__d5xwh">11 августа 2008</span>
+                              </div>
+                            </div>
+                            <div class="styles_userControlsContainer__iYP9P styles_section__OVMys">
+                              <div class="styles_controlContainer__5hjSk" data-tid="5310ddc0">
+                                <div class="styles_foldersMenu__R90ST styles_root__g0CT9" data-tid="4a36b453">
+                                  <div class="styles_root__VEPvG styles_buttonSet____zRE styles_rootDark__21i2y"
+                                    data-tid="62abee53"><button
+                                      class="styles_button__MpYNC styles_listToWatchButton__N_ywG styles_root__sjOi_ styles_rootDark__q3mrJ styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootDark__NnSuo styles_rootGhost__7yeKn">Буду
+                                      смотреть</button><button
+                                      class="styles_button__MpYNC styles_root__v9qoq styles_rootDark__0JBC5 styles_root__lbhjd styles_rootDark__NnSuo styles_rootGhost__7yeKn"><span
+                                        class="styles_tooltip__BZYE_" data-tid="d43912a6">Добавить в список</span></button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_rootDark__DGVpw styles_root__dZcuU" data-tid="e5bec5b3"><a
+                                  href="/film/329/folders/" class="styles_linkDark__MhXy4 styles_link___yiZO">Все папки
+                                  пользователей</a></div>
+                            </div>
+                            <div class="styles_socialControlsContainer__7mYQK">
+                              <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim" data-tid="893da4ad">
+                                  <div class="styles_share__4uBuh styles_root__MJ3vO" data-tid="755217e">
+                                    <div id="film-share-buttons"></div>
+                                    <div class="styles_root__vr1TL" data-tid="7cfcb140"><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb styles_rootInDark__qcybG styles_root__2Vgyb"
+                                        data-tid="ad14a6be">‌</span><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb styles_rootInDark__qcybG styles_root__2Vgyb"
+                                        data-tid="ad14a6be">‌</span><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb styles_rootInDark__qcybG styles_root__2Vgyb"
+                                        data-tid="ad14a6be">‌</span><span
+                                        class="styles_button__BSoLb styles_root__2Vgyb styles_rootInDark__qcybG styles_root__2Vgyb"
+                                        data-tid="ad14a6be">‌</span></div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                <div
+                                  class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_root__wNLLi styles_feedbackButtons__i2cPM"
+                                  data-tid="893da4ad">
+                                  <div class="styles_wrapper__rcDa_" data-tid="d43e8a06"><button type="button"
+                                      class="styles_buttonError__P0JjC styles_button__qRXLB styles_buttonDark__qLSwL">Нашли
+                                      ошибку?</button><button type="button"
+                                      class="styles_buttonInfo__gH8CS styles_button__qRXLB styles_buttonDark__qLSwL">Добавить
+                                      инфо</button></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_delimiter__m7GQp styles_delimiterDark__kHzRL styles_delimiter__rPlVI"></div>
+                      <div class="styles_column__r2MWX styles_md_17__FaWtp styles_lg_21__YjFTk styles_column__5dEFP"
+                        data-tid="893da4ad">
+                        <div class="styles_main__vjk2Q styles_main__ZXV8U">
+                          <div class="styles_root__4VfvJ styles_basicInfoSection__EiD2J styles_basicInfoSectionDark__Mxqmc"
+                            data-tid="bb43fc51">
+                            <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                                <div class="styles_header__mzj3d">
+                                  <div class="styles_title__hTCAr" data-tid="b97a4e4c">
+                                    <h1
+                                      class="styles_title__65Zwx styles_root__l9kHe styles_root__5sqsd styles_rootInDark__SZlor"
+                                      itemProp="name"><span data-tid="75209b22">Список Шиндлера (1993)</span></h1>
+                                    <div class="styles_root__LIL2v styles_rootInDark__wvz_c" data-tid="7cdbd36a"><span
+                                        class="styles_originalTitle__JaNKM" data-tid="eb6be89">Schindler&#x27;s List</span><span
+                                        class="styles_rootSmallFaded__LiPsm styles_rootSmallFadedInDark__m1H_w"
+                                        data-tid="5c1ffa33">16+</span></div>
+                                  </div>
+                                  <div class="styles_root__VAeAD" data-tid="98a3cfe2">
+                                    <div class="styles_topText__p__5L">
+                                      <p class="styles_root__aZJRN" data-tid="bfd38da2">История немецкого промышленника,
+                                        спасшего тысячи жизней во время Холокоста. Драма Стивена Спилберга</p>
+                                    </div>
+                                    <div class="styles_watchOnlineBlock__BE3Ci" data-tid="25c2fa6f">
+                                      <div class="styles_subscriptionText__xEiOR">бесплатно до лета</div>
+                                      <div class="styles_subscriptionSubtext__zQuOI">далее 299 ₽ в месяц</div>
+                                      <div class="styles_buttonsContainer__i6y3F">
+                                        <div class="styles_button__Q82i0">
+                                          <div class="watch-online-button styles_containerRoot__cSJvu" data-tid="85a13d20"><a
+                                              href="https://hd.kinopoisk.ru/film/464e95b73e7d1e219ab9fb3783cda8cb?from_block=kp-button-online"
+                                              class="kinopoisk-watch-online-button styles_root__EZXGw styles_rootPlus__bBjkI styles_rootDesktop__fGTTz styles_rootSizeH44__g0ZUk styles_isRounded__fiuxG styles_watchOnlineButton__ruFtI"><span
+                                                class="styles_defaultText__PgVb9 undefined" data-tid="6cb8d12f">По подписке
+                                                Плюс</span></a></div>
+                                        </div>
+                                        <div class="styles_button__Q82i0">
+                                          <div class="style_root__BmiQ7" data-tid="be0d3e42"><button
+                                              class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonDark__78ypq style_withIconLeft__xpAII style_onlyIcon__D09QE"
+                                              title="Буду смотреть"><span class="style_iconLeft__vU_kH"
+                                                data-tid="c8f29373"><span
+                                                  class="style_icon__QLJtP style_iconDark__fxZF9"></span></span></button></div>
+                                        </div>
+                                        <div class="styles_button__Q82i0">
+                                          <div class="style_root__eRD4o" data-tid="17569662">
+                                            <div class="style_root__Bt5S1" data-tid="818a5033"><button
+                                                class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonDark__78ypq style_withIconLeft__xpAII style_onlyIcon__D09QE"><span
+                                                  class="style_iconLeft__vU_kH" data-tid="c8f29373"><span
+                                                    class="style_icon__V3VQE style_dropdownButtonIconDark__sDaV0"
+                                                    data-tid="e07f9f7b"></span></span></button></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="styles_hdMetaTableContainer__6BtEF">
+                                      <div class="" data-test-id="meta-table" data-tid="bd126b5e">
+                                        <div
+                                          class="styles_rowLight__P8Y_1 styles_row__da_RK styles_row__lwy5i styles_withDelimiter__ay80B styles_movieDetails__FOUgq"
+                                          data-tid="7cda04a5">
+                                          <div class="styles_titleLight__HIbfT styles_title__b1HVo">Аудиодорожки</div>
+                                          <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="e1e37c21">
+                                            <div class="styles_valueLight__UMEMJ">Русский, Английский</div>
+                                          </div>
+                                        </div>
+                                        <div
+                                          class="styles_rowLight__P8Y_1 styles_row__da_RK styles_row__lwy5i styles_withDelimiter__ay80B styles_movieDetails__FOUgq"
+                                          data-tid="7cda04a5">
+                                          <div class="styles_titleLight__HIbfT styles_title__b1HVo">Субтитры</div>
+                                          <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="e1e37c21">
+                                            <div class="styles_valueLight__UMEMJ">Русские</div>
+                                          </div>
+                                        </div>
+                                        <div
+                                          class="styles_rowLight__P8Y_1 styles_row__da_RK styles_row__lwy5i styles_definitionRow__fkueN styles_withDelimiter__ay80B styles_movieDetails__FOUgq"
+                                          data-tid="7cda04a5">
+                                          <div class="styles_titleLight__HIbfT styles_title__b1HVo">Качество видео</div>
+                                          <div
+                                            class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_definitionRowValue__QvGno"
+                                            data-tid="7e7b470c"><svg width="50" height="16" fill="none"
+                                              xmlns="http://www.w3.org/2000/svg" data-tid="43b9c55a">
+                                              <rect x=".75" y=".75" width="48.5" height="14.5" rx="2.25" stroke="#ccc"
+                                                stroke-width="1.5"></rect>
+                                              <path
+                                                d="M6.768 12.12H8.55V9.073h2.585V7.73H8.55V5.65h3.267V4.256h-5.05v7.865ZM14.565 12.24c.946 0 1.529-.44 1.826-1.022v.902h1.584V6.367H16.39v3.377c0 .847-.528 1.265-1.2 1.265-.681 0-1-.374-1-1.155V6.367h-1.584v3.707c0 1.507.836 2.167 1.958 2.167ZM19.43 12.12h1.584V3.76H19.43v8.36ZM22.513 12.12h1.584V3.76h-1.584v8.36ZM28.134 12.12h1.782V8.875h3.157v3.245h1.782V4.255h-1.782v3.212h-3.157V4.255h-1.782v7.865ZM36.534 12.12h2.563c2.761 0 4.136-1.573 4.136-3.927v-.088c0-2.354-1.364-3.85-4.125-3.85h-2.574v7.865Zm1.782-1.386V5.64h.704c1.661 0 2.354.869 2.354 2.486v.088c0 1.628-.748 2.519-2.332 2.519h-.726Z"
+                                                fill="#ccc"></path>
+                                            </svg></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_watchingServicesOnline__ZlcNv">
+                                    <div data-tid="e8c5d94f">
+                                      <div class="style_header__ZPNFN" data-tid="c456f2ce">
+                                        <h3
+                                          class="film-page-section-title styles_rootTitle__2g8Sk style_title__DoU6X styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootLight__m9pzE">
+                                          <div class="styles_titleWithMoreItem__rTA7s" data-tid="6a319a9e">Где ещё смотреть<span
+                                              class="styles_moreItem__U5bzS">8</span></div>
+                                        </h3><button class="style_toggleButton__QSI86 style_toggleButtonDark__8TpjK"
+                                          aria-label="Развернуть" type="button"></button>
+                                      </div>
+                                      <div class="style_contentWrapper__iT6JH" data-tid="d0682e1e">
+                                        <div class="style_content__L6r_p">
+                                          <div class="style_listInRows__op0dF" data-tid="c456f2ce">
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://okko.tv/movie/schindlers-list?utm_medium=referral&amp;utm_source=yandex_search&amp;utm_campaign=new_search_feed"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/239697/7713e586-17d1-42d1-ac62-53e9ef1e70c3/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/239697/7713e586-17d1-42d1-ac62-53e9ef1e70c3/orig 1x, //avatars.mds.yandex.net/get-ott/239697/7713e586-17d1-42d1-ac62-53e9ef1e70c3/orig 2x"
+                                                    data-tid="d813cf42" /></span><span
+                                                  class="styles_title__434hO">Okko</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://www.ivi.ru/watch/100131?utm_source=yandex&amp;utm_medium=wizard"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig 1x, //avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig 2x"
+                                                    data-tid="d813cf42" /></span><span
+                                                  class="styles_title__434hO">IVI</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://kion.ru/video/movie/162353237?utm_source=yandex&amp;utm_medium=wizard"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig 1x, //avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig 2x"
+                                                    data-tid="d813cf42" /></span><span
+                                                  class="styles_title__434hO">KION</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://premier.one/show/17297?utm_source=yandex&amp;utm_medium=yandex_feed_search&amp;utm_campaign=yandex_feed"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/239697/0f86e907-9531-47e9-87bd-5101a08d4e30/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/239697/0f86e907-9531-47e9-87bd-5101a08d4e30/orig 1x, //avatars.mds.yandex.net/get-ott/239697/0f86e907-9531-47e9-87bd-5101a08d4e30/orig 2x"
+                                                    data-tid="d813cf42" /></span><span
+                                                  class="styles_title__434hO">PREMIER</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://more.tv/spisok-shindlera?utm_source=yandex-snippet&amp;utm_medium=snippet&amp;utm_campaign=spisok_shindlera"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/1648503/97e3cbbd-40ee-4298-888d-ed2d0f022a69/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/1648503/97e3cbbd-40ee-4298-888d-ed2d0f022a69/orig 1x, //avatars.mds.yandex.net/get-ott/1648503/97e3cbbd-40ee-4298-888d-ed2d0f022a69/orig 2x"
+                                                    data-tid="d813cf42" /></span><span
+                                                  class="styles_title__434hO">more.tv</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://tv.apple.com/ru/movie/umc.cmc.53hzoo3z0ufjb6wsxgspp2jlf"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig 1x, //avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig 2x"
+                                                    data-tid="d813cf42" /></span><span class="styles_title__434hO">Apple
+                                                  TV</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://wink.ru/media_items/56146305?utm_source=yandex&amp;utm_medium=koldunschick&amp;utm_content=name"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/1672343/54096cbe-cc3b-41c9-8e44-990ebbca8d61/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/1672343/54096cbe-cc3b-41c9-8e44-990ebbca8d61/orig 1x, //avatars.mds.yandex.net/get-ott/1672343/54096cbe-cc3b-41c9-8e44-990ebbca8d61/orig 2x"
+                                                    data-tid="d813cf42" /></span><span
+                                                  class="styles_title__434hO">Wink</span></a></div>
+                                            <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                                href="https://megafon.tv/movies/vods/Spisok_Shindlera_1993?utm_source=yandex&amp;utm_medium=wizard&amp;utm_campaign=Spisok_Shindlera_1993"
+                                                target="_blank" rel="noopener noreferrer"
+                                                class="styles_root__b5Uwf styles_rootDark__xvd5U" data-tid="5f829942"><span
+                                                  class="styles_logo__SNt5e"><img
+                                                    class="style_root__KgLcy image styles_root__DZigd"
+                                                    src="//avatars.mds.yandex.net/get-ott/1672343/74a3af87-2bfa-4cdc-bc16-32a21114665b/orig"
+                                                    srcSet="//avatars.mds.yandex.net/get-ott/1672343/74a3af87-2bfa-4cdc-bc16-32a21114665b/orig 1x, //avatars.mds.yandex.net/get-ott/1672343/74a3af87-2bfa-4cdc-bc16-32a21114665b/orig 2x"
+                                                    data-tid="d813cf42" /></span><span class="styles_title__434hO">МегаФон
+                                                  ТВ</span></a></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb" data-tid="893da4ad">
+                                <div class="styles_root__lMV74 styles_filmRating__H_B11" data-tid="86be324">
+                                  <div class="film-rating styles_root__7rVf_ styles_rootMSize__B8Ch0 styles_rootInDark__Mfeeo"
+                                    data-tid="71598065">
+                                    <div class="styles_ratingValue__UO6Zl styles_rootMSize__B8Ch0">
+                                      <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><span
+                                            class="film-rating-value styles_rootPositive__mLBSO styles_rootInDark__Janz7">8.8</span></span>
+                                      </div>
+                                      <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">413 201
+                                          оценка</span></div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_kinopoiskRatingSnippet__tqtsG">
+                                    <div class="style_root__tg2Nx" data-tid="410c06ef"><button
+                                        class="style_button__LAvI6 style_buttonMedium__Z93fP style_buttonDefault__c0tGZ style_buttonDark__78ypq style_fullWidth__ib6MF">Оценить
+                                        фильм</button></div>
+                                  </div>
+                                  <div class="styles_reviewsLink__5xOtO">
+                                    <div class="styles_reviewCountDark__5LMtp styles_reviewCount__w_RrM" data-tid="d87cf2dd">414
+                                      рецензий</div>
+                                  </div>
+                                </div>
+                                <div class="styles_topList__1xtLA styles_topListDark__30bOZ" data-tid="d3ba9b85"><a
+                                    class="styles_root__UjpdS styles_rootDark__kCZC3" href="/lists/movies/top250/"
+                                    data-tid="2c52e3fd">
+                                    <div class="styles_root__ixhBE styles_icon__0l7mg styles_size41x42__BC3fA"
+                                      data-tid="a757238c"></div><span class="styles_root__Q2THk styles_listTitle__mDgWK"
+                                      data-tid="b012c88c">топ 250</span><span
+                                      class="styles_root__Q2THk styles_listPosition__Tg7NC" data-tid="b012c88c">3 место</span>
+                                  </a></div>
+                              </div>
+                            </div>
+                            <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                                <h3
+                                  class="film-page-section-title styles_rootTitle__2g8Sk styles_tableHeader__HdxpN styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootLight__m9pzE">
+                                  О фильме</h3>
+                                <div class="" data-test-id="encyclopedic-table" data-tid="bd126b5e">
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Год производства</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="cfbe5a01"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk"
+                                        href="/lists/movies/year--1993/?b=films&amp;b=top">1993</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Страна</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk"
+                                        href="/lists/movies/country--1/?b=films&amp;b=top" data-tid="603f73a4">США</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Жанр</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_root__5PEXQ"
+                                      data-tid="28726596">
+                                      <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                          class="styles_linkLight__cha3C styles_link__3QfAk"
+                                          href="/lists/movies/genre--drama/?b=films&amp;b=top" data-tid="603f73a4">драма</a>, <a
+                                          class="styles_linkLight__cha3C styles_link__3QfAk"
+                                          href="/lists/movies/genre--biography/?b=films&amp;b=top"
+                                          data-tid="603f73a4">биография</a>, <a
+                                          class="styles_linkLight__cha3C styles_link__3QfAk"
+                                          href="/lists/movies/genre--history/?b=films&amp;b=top"
+                                          data-tid="603f73a4">история</a>, <a class="styles_linkLight__cha3C styles_link__3QfAk"
+                                          href="/lists/movies/genre--war/?b=films&amp;b=top" data-tid="603f73a4">военный</a>
+                                      </div><a href="/film/329/keywords/"
+                                        class="styles_linkLight__cha3C styles_link__3QfAk keywords">слова</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Слоган</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueLight__nAaO3 styles_value__g6yP4">«Этот список - жизнь»</div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Режиссер</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/22260/"
+                                        data-tid="603f73a4">Стивен Спилберг</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Сценарий</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/41493/"
+                                        data-tid="603f73a4">Стивен Зеллиан</a>, <a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/251903/"
+                                        data-tid="603f73a4">Томас Кенилли</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Продюсер</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/277116/"
+                                        data-tid="603f73a4">Ирвинг Гловин</a>, <a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/20396/"
+                                        data-tid="603f73a4">Кэтлин Кеннеди</a>, <a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/10046/"
+                                        data-tid="603f73a4">Бранко Лустиг</a>, <a href="/film/329/cast/who_is/producer/"
+                                        class="styles_linkLight__cha3C styles_link__3QfAk">...</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Оператор</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/9326/"
+                                        data-tid="603f73a4">Януш Камински</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Композитор</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/225027/"
+                                        data-tid="603f73a4">Джон Уильямс</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Художник</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/1986387/"
+                                        data-tid="603f73a4">Аллан Старски</a>, <a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/1987343/"
+                                        data-tid="603f73a4">Анна Б. Шеппард</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Монтаж</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/name/172398/"
+                                        data-tid="603f73a4">Майкл Кан</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Бюджет</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="cfbe5a01"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/film/329/box/">${'$'}22 000 000</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Сборы в США</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_root__XwglO"
+                                      data-tid="41068c56"><a class="styles_linkLight__cha3C styles_link__3QfAk"
+                                        href="/film/329/box/">${'$'}96 065 768</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Сборы в мире</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_root__XwglO"
+                                      data-tid="41068c56"><a class="styles_linkLight__cha3C styles_link__3QfAk"
+                                        href="/film/329/box/">+ ${'$'}225 240 537 = ${'$'}321 306 305</a><a href="/film/329/box/"
+                                        class="styles_linkLight__cha3C styles_link__3QfAk">сборы</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Зрители</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="328581d6"><span
+                                        class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_item__qLVK1"
+                                        data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-1.gif"
+                                          alt="США" class="styles_icon__tVSsA" />23 млн </span>, <span
+                                        class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_item__qLVK1"
+                                        data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-3.gif"
+                                          alt="Германия" class="styles_icon__tVSsA" />6.1 млн </span>, <span
+                                        class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_item__qLVK1"
+                                        data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-8.gif"
+                                          alt="Франция" class="styles_icon__tVSsA" />2.7 млн </span>, <a href="/film/329/dates/"
+                                        class="styles_linkLight__cha3C styles_link__3QfAk">...</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Премьера в Росcии</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="ca30f216"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/premiere/ru/1994/to/329/#329"
+                                        data-tid="3aaab4fd">21 мая 1994</a>, <a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/lists/m_act[company]/37/"
+                                        data-tid="3aaab4fd">«Ист-Вест»</a><span class="styles_stickers__hGaZH"></span></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Премьера в мире</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                        class="styles_linkLight__cha3C styles_link__3QfAk" href="/film/329/dates/"
+                                        data-tid="603f73a4">30 ноября 1993</a>, <a href="/film/329/dates/"
+                                        class="styles_linkLight__cha3C styles_link__3QfAk">...</a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Релиз на DVD</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueLight__nAaO3 styles_value__g6yP4">28 сентября 2004, «Premier
+                                        Digital»</div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Релиз на Blu-ray</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueLight__nAaO3 styles_value__g6yP4">11 апреля 2013, «Двадцатый Век
+                                        Фокс СНГ»</div>
+                                    </div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Возраст</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                                      data-tid="b7fd8541"><a class="styles_restrictionLink__iy4n9"><span
+                                          class="styles_rootHighContrast__Bevle styles_rootHighContrastInDark___UcNT"
+                                          data-tid="5c1ffa33">16+</span></a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Рейтинг MPAA</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                                      data-tid="b7fd8541"><a class="styles_restrictionLink__iy4n9" href="/film/329/rn/R/"><span
+                                          class="styles_rootHighContrast__Bevle styles_rootHighContrastInDark___UcNT"
+                                          data-tid="5c1ffa33">R</span><span
+                                          class="styles_restrictionDescription__4j5Pk styles_valueLight__nAaO3 styles_value__g6yP4">лицам
+                                          до 17 лет обязательно присутствие взрослого</span></a></div>
+                                  </div>
+                                  <div class="styles_rowLight__P8Y_1 styles_row__da_RK" data-tid="7cda04a5">
+                                    <div class="styles_titleLight__HIbfT styles_title__b1HVo">Время</div>
+                                    <div class="styles_valueLight__nAaO3 styles_value__g6yP4" data-tid="e1e37c21">
+                                      <div class="styles_valueLight__nAaO3 styles_value__g6yP4">195 мин. / 03:15</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb" data-tid="893da4ad">
+                                <div class="styles_mainSide__qVMH4">
+                                  <div class="film-crew-block styles_filmCrew__tx5Wt" data-tid="f984424">
+                                    <div class="styles_actors__wn_C4" data-tid="38ecf27e">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootLight__m9pzE">
+                                        <a href="/film/329/cast/" class="styles_link__KtvyW" data-tid="6a319a9e">В главных
+                                          ролях</a>
+                                      </h3>
+                                      <ul class="styles_list___ufg4">
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/6534/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Лиам Нисон</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/6846/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Бен Кингсли</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/22670/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Рэйф Файнс</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/12093/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Кэролайн Гудолл</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/21893/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Эмбет Дэвидц</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/157676/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Йонатан Сэгаль</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/152279/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Малгоша Гебель</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/829028/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Шмуэль Леви</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/54872/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Марк Иванир</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/252711/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Беатриче Макола</a></li>
+                                      </ul><a href="/film/329/cast/"
+                                        class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">145 актеров</a>
+                                    </div>
+                                    <div data-tid="38ecf27e">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootLight__m9pzE">
+                                        <a href="/film/329/cast/who_is/voice/" class="styles_link__KtvyW"
+                                          data-tid="6a319a9e">Роли дублировали</a>
+                                      </h3>
+                                      <ul class="styles_list___ufg4">
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/261728/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Андрей Мартынов</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/261638/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Алексей Борзунов</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/277438/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Андрей Ташков</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/280784/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Ирина Акулова</a></li>
+                                        <li class="styles_root__vKDSE styles_rootInDark__Nm7il" data-tid="2e6eb73e"><a
+                                            href="/name/273560/" class="styles_link__Act80" itemProp="actor"
+                                            data-tid="d4e8d214">Вадим Андреев</a></li>
+                                      </ul><a href="/film/329/cast/who_is/voice/"
+                                        class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">30 актеров</a>
+                                    </div>
+                                  </div>
+                                  <div class="styles_root__b_uZM styles_awards__stpdy" data-tid="8986781d"><a
+                                      href="/film/329/awards/" class="styles_link__J0S43 styles_linkOscar__ygbHO"
+                                      data-tid="cbdd8e90"><img class="image styles_root__DZigd"
+                                        src="//st.kp.yandex.net/images/movies/awardOscar.png" data-tid="d813cf42" /><span
+                                        class="styles_nominationCount__Lf_e1 styles_nominationCountDark___7jTe styles_nominationCountWinner__9eoZf">7</span></a>
+                                    <div class="styles_popover__08Mlf styles_root__SeBrp" data-tid="e30ff91d">
+                                      <div class="styles_nominations__I5ywE">
+                                        <h3
+                                          class="film-page-section-title styles_rootTitle__2g8Sk styles_title__8qqmP styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                          <a href="/film/329/awards/" class="styles_link__KtvyW" data-tid="6a319a9e">Оскар<span
+                                              class="styles_moreItem__U5bzS">7</span></a>
+                                        </h3>
+                                        <ul class="styles_root__GOA2M" data-tid="ae580d90">
+                                          <li><span class="styles_year__jgPZo">1994</span><span
+                                              class="styles_listTitle__8bDJP styles_listTitleWinner__TYTyo">Победитель</span>
+                                          </li>
+                                          <li data-tid="b4b29a33"><span class="styles_year__jgPZo"></span>
+                                            <div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучший фильм</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучший режиссер</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучший адаптированный сценарий</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучшая работа оператора</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучшие декорации</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучший монтаж</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                  Лучший оригинальный саундтрек</div>
+                                              </div>
+                                            </div>
+                                          </li>
+                                        </ul>
+                                        <ul class="styles_root__GOA2M" data-tid="ae580d90">
+                                          <li><span class="styles_year__jgPZo">1994</span><span
+                                              class="styles_listTitle__8bDJP">Номинации</span></li>
+                                          <li data-tid="b4b29a33"><span class="styles_year__jgPZo"></span>
+                                            <div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">Лучшая мужская роль</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">Лучшая мужская роль второго плана
+                                                </div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">Лучшие костюмы</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">Лучший звук</div>
+                                              </div>
+                                              <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                                <div class="styles_nominationTitle__dlmVi">Лучший грим</div>
+                                              </div>
+                                            </div>
+                                          </li>
+                                        </ul><a href="/film/329/awards/" class="styles_allAwardsLink__6vgYm"
+                                          data-tid="935823d">Все награды</a>
+                                      </div>
+                                      <div class="styles_mainAward__Riz_k"><a href="/film/329/awards/"
+                                          class="styles_link__J0S43 styles_linkOscar__ygbHO" data-tid="cbdd8e90"><img
+                                            class="image styles_root__DZigd"
+                                            src="//st.kp.yandex.net/images/movies/awardOscar.png" data-tid="d813cf42" /><span
+                                            class="styles_nominationCount__Lf_e1 styles_nominationCountWinner__9eoZf">7</span></a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="styles_root__2kxYy" data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e" data-tid="893da4ad">
+                              </div>
+                            </div>
+                            <div class="styles_root__2kxYy styles_topLine__xigow styles_topLineUserNote__hxKqF"
+                              data-tid="914bd01c">
+                              <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="styles_root__B1q5W styles_rootLight___QD_Q styles_root__axj8R" data-tid="21855542">
+                  <div class="styles_root__UtArQ" data-tid="3716659c">
+                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e styles_column__5dEFP"
+                        data-tid="893da4ad">
+                        <div class="styles_main__vjk2Q styles_additionalInformationSection__GmCD7">
+                          <div class="styles_root__KtmEB" data-tid="37b61dba">
+                            <div data-tid="e0411e82">
+                              <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                            </div>
+                          </div><span id="film-details-info" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div data-tid="e0411e82">
+                              <div class="film-details-block styles_root__FF738" data-tid="71e757c">
+                                <div class="styles_tabsSection__aKq4_">
+                                  <div class="styles_root__rVp2r" data-tid="3855337e">
+                                    <div class="styles_itemsSpoiler__ROHvQ styles_ssr__ytsd7" data-tid="de3d23c9">
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_itemActive__Nd9PE styles_item__CGufh"
+                                          data-tid="b92ae11f"><span
+                                            class="styles_itemActive__S4PQM styles_item__wPOY6">Обзор</span></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/awards/">Награды</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/dates/">Премьеры</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/stills/">Изображения</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/video/">Трейлеры</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/studio/">Студии</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/other/">Связи</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                            href="/film/329/reviews/">Рецензии</a></div>
+                                      </div>
+                                      <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                        <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><span
+                                            class="styles_itemDefault__nPthf styles_item__wPOY6">Еще...</span>
+                                          <div class="styles_dropDownContainer__g27mF">
+                                            <div class="styles_dropDown__QqORT styles_dropDown__wMbnB">
+                                              <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                data-tid="b92ae11f"><a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                  href="/film/329/sites/">Сайты</a></div>
+                                              <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                data-tid="b92ae11f"><a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                  href="/film/329/tracks/">Саундтреки</a></div>
+                                              <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                data-tid="b92ae11f"><a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                  href="/film/329/subscribe/">Подписка на обновления</a></div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="styles_synopsisSection__nJoAj">
+                                  <div class="styles_filmSynopsis__Cu2Oz" data-tid="7f916518">
+                                    <p class="styles_paragraph__wEGPz" data-tid="bbb11238">Фильм рассказывает реальную историю
+                                      загадочного Оскара Шиндлера, члена нацистской партии, преуспевающего фабриканта, спасшего
+                                      во время Второй мировой войны почти 1200 евреев.</p>
+                                  </div>
+                                </div>
+                                <div class="styles_filmRatingSection___Sph9">
+                                  <div class="" data-tid="af0b971c">
+                                    <h3
+                                      class="film-page-section-title styles_rootTitle__2g8Sk styles_title__vtVG_ styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                      Рейтинг фильма</h3>
+                                    <div class="styles_content__QYDgA">
+                                      <div class="styles_formContainer__yBeUw">
+                                        <form class="styles_form__2pcvP styles_form__Bw8gI film-rate-form" data-tid="ad886728">
+                                          <label class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="1" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="1" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="2" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="2" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="3" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="3" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="4" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="4" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="5" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="5" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="6" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="6" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="7" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="7" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="8" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="8" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                            data-value="9" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                              name="star" value="9" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span><span style="width:83%"
+                                                class="styles_partialIcon__PpsMw styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label><label
+                                            class="styles_radio__IqZef styles_root__FBsKv" data-value="10"
+                                            data-tid="5d365105"><input type="radio" class="styles_input__SRM0B" name="star"
+                                              value="10" /><span class="styles_iconContainer__9nPOy"><span
+                                                class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                                data-tid="5a15c5d7"></span></span></label>
+                                        </form>
+                                        <div class="styles_buttons__dSk8l"><button
+                                            class="styles_scrollToAddReviewButton__GAfqB styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                              class="styles_tooltip__BZYE_" data-tid="d43912a6">Написать рецензию</span>Написать
+                                            рецензию</button></div>
+                                      </div>
+                                      <div class="styles_ratingContainer__RhJ96">
+                                        <div>
+                                          <div
+                                            class="film-rating styles_root__7rVf_ styles_rootLSize__X4aDt styles_rootInLight__4w53g"
+                                            data-tid="71598065">
+                                            <div class="styles_ratingValue__UO6Zl styles_rootLSize__X4aDt">
+                                              <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><a
+                                                    class="film-rating-value styles_rootKpTop__pByhB styles_rootLink__mm0kW"
+                                                    href="/film/329/votes/">8.8</a></span><a
+                                                  class="styles_topListPositionBadge__j5rPp styles_root__jYb9p styles_rootLegacy__Ft6DV"
+                                                  href="/lists/movies/top250/" data-tid="45e77845">
+                                                  <div class="styles_root__ixhBE styles_icon__fFV9t styles_size36x37__A0Apc"
+                                                    data-tid="a757238c"></div>
+                                                  <div>
+                                                    <div class="styles_content__yUcEK"><span
+                                                        class="styles_root__Q2THk styles_title__b0LlO" data-tid="b012c88c">топ
+                                                        250</span><span class="styles_root__Q2THk styles_position__pm10U"
+                                                        data-tid="b012c88c">#
+                                                        <!-- -->3
+                                                      </span></div><span class="styles_root__Q2THk styles_subtitle__9DKd0"
+                                                      data-tid="b012c88c">Кинопоиск</span>
+                                                  </div>
+                                                </a></div>
+                                              <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">413 201
+                                                  оценка</span><span class="styles_count__iOIwD">
+                                                  <div class="film-sub-rating" data-tid="3d4f49c8"><span
+                                                      class="styles_valueSection__0Tcsy">IMDb
+                                                      <!-- -->:
+                                                      <!-- -->9.00
+                                                    </span><span class="styles_count__89cAz">1 314 270 оценок</span></div>
+                                                </span></div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="styles_criticRatingSection__rlcU9">
+                                  <div class="styles_root__i6At7 styles_rootSingleRating__zB3Yi" data-tid="f914d65f">
+                                    <div class="styles_ratingBar__W5otN" data-tid="9f39fdf1">
+                                      <h3
+                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_header__I8hG1 styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                                        Рейтинг кинокритиков в мире</h3>
+                                      <div class="styles_filmRatingBar__Mks7X styles_ratingBar__NSzsB styles_withValue__PEUCo"
+                                        data-tid="d610b8e8">
+                                        <div class="styles_greenBar__NAQmT styles_bar__7hk5H" style="flex:98;min-width:30px">125
+                                        </div>
+                                        <div class="styles_redBar__b_rlR styles_bar__7hk5H" style="flex:2;min-width:30px">3
+                                        </div>
+                                      </div>
+                                      <div class="styles_actionBar__6SGOg">
+                                        <div class="styles_actionBarLeft__rwQsY">
+                                          <div
+                                            class="film-rating styles_root__7rVf_ styles_rootSSize__sQJqB styles_rootInLight__4w53g"
+                                            data-tid="71598065">
+                                            <div class="styles_ratingValue__UO6Zl styles_rootSSize__sQJqB">
+                                              <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><span
+                                                    class="film-rating-value styles_rootPositive__mLBSO">98%</span></span></div>
+                                              <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">128
+                                                  оценок<span class="styles_starValue__tchEE">9.2</span></span></div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="film-similar_movies" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__AphAt" data-tid="718c3e1"><span
+                                class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__TDvSy">
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                              </div>
+                            </div>
+                          </div><span id="film-trailers" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__NaGgU" data-tid="388eb013"><span
+                                class="styles_title__DqgWT styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7" data-tid="893da4ad">
+                                  <div class="" data-tid="2e582843"><span class="styles_preview__ruOp9 styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span
+                                      class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span></div>
+                                </div>
+                                <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7" data-tid="893da4ad">
+                                  <div class="" data-tid="2e582843"><span class="styles_preview__ruOp9 styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span
+                                      class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span
+                                      class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="film-facts" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__DA3xg" data-tid="f66307a6"><span
+                                class="styles_title__juLbV styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span><span class="styles_trivias__dYVWd styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span></div>
+                          </div><span id="film-media-posts" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__5UEhB" data-tid="bb544b3"><span
+                                class="styles_title__G7P6B styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__a_hbM">
+                                <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f"><span
+                                    class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  <div class="styles_content__mbyG4"><span class="styles_title__c_Mad styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span class="styles_date__RRcaK styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span></div>
+                                </div>
+                                <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f"><span
+                                    class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  <div class="styles_content__mbyG4"><span class="styles_title__c_Mad styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span class="styles_date__RRcaK styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span></div>
+                                </div>
+                                <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f"><span
+                                    class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                                  <div class="styles_content__mbyG4"><span class="styles_title__c_Mad styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span><span class="styles_date__RRcaK styles_root__2Vgyb"
+                                      data-tid="ad14a6be">‌</span></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div><span id="today-in-cinema-block" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__AphAt" data-tid="718c3e1"><span
+                                class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_carousel__TDvSy">
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                    class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                    class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div id="user-reviews" class="styles_root__bpW7N" data-tid="7a20dd1e">
+                            <div data-tid="e0411e82"><span id="film-users-reviews" style="height:0" data-tid="32753834"></span>
+                              <div style="min-width:1px" data-tid="517927c6">
+                                <div class="styles_root__rly1E" data-tid="a4f2984f"><span
+                                    class="styles_title__4zZWY styles_root__llf0m styles_rootLg__v_8HV styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_button__hH7LK styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_review__qp_BA styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT"></div>
+                      <div
+                        class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP styles_sidebarSection__q_p1Y"
+                        data-tid="893da4ad">
+                        <div class="styles_sidebar__mZOfP">
+                          <div class="" data-tid="43d5b8ef">
+                            <div class="" data-tid="e810e001">
+                              <div id="foxadbanner_200_200_film" class="styles_container__XXCpX" data-tid="9501d3f4"></div>
+                            </div>
+                          </div>
+                          <div class="styles_root____5P5" data-tid="14985c6b">
+                            <div class="styles_header__iErfu">
+                              <nav class="styles_nav__gHl7k"><button tabindex="0" type="button"
+                                  class="styles_root__5QqzE styles_rootSelected__oVvef" data-tid="1f6a4ca6">Друзья</button>
+                              </nav>
+                              <div class="styles_rating__sV8yH"></div>
+                            </div>
+                            <div class="styles_root__sGbD8" data-tid="c17d21c6"><button tabindex="0" type="button"
+                                class="styles_link__xVM_W">Найдите друзей</button>, зарегистрированных на Кинопоиске, и здесь
+                              появятся оценки, которые ваши друзья поставили этому фильму...</div>
+                          </div><span id="movie-lists-relations" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div class="styles_root__UkkRY" data-tid="d34ff620"><span
+                                class="styles_skeletonTitle__zDdnJ styles_title__zJKfl styles_root__llf0m styles_rootSm__Nt66I styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                              <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                            </div>
+                          </div><span id="soundtrack-section" style="height:0" data-tid="32753834"></span>
+                          <div style="min-width:1px" data-tid="517927c6">
+                            <div data-tid="373566cd"><span
+                                class="styles_skeletonTitle__uDC2G styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                data-tid="ad14a6be">‌</span>
+                              <div class="styles_skeletonIframe__bRjU0">
+                                <div class="styles_skeletonCoverWrap__HoP_s"><span
+                                    class="styles_skeletonPicture__aal6r styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                                <div class="styles_skeletonContent__sfMYz"><span
+                                    class="styles_skeletonAlbumTitle__ZYn6S styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSubtitle__wUNb_ styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span
+                                    class="styles_skeletonPlayButton___gNe9 styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                    data-tid="ad14a6be">‌</span></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="styles_sticky__S5Rjy" data-tid="5da1a3ef">
+                            <div class="styles_root__TryBS">
+                              <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="styles_footerContainer__Mk60T styles_baseContainer__8XBMw">
+                <footer class="footer styles_rootDark__mtmaQ styles_root__sUtn2" data-tid="995d0553">
+                  <section class="styles_root__kcCHj social-icons styles_socialMenu__gLaiH" data-tid="39df70f"><a
+                      class="styles_icon__cHky_" href="https://vk.com/kinopoisk" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/118781/0ae3d1ca27d3794204beec7d3810025f8c2b7e87/svg"
+                        alt="https://vk.com/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a class="styles_icon__cHky_"
+                      href="https://www.facebook.com/kinopoisk" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/56833/0baf23635975a9f1b481833f37653aa2efceb3a1/svg"
+                        alt="https://www.facebook.com/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+                      class="styles_icon__cHky_" href="https://twitter.com/kinopoiskru" target="_blank"
+                      rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/61205/97123f0bc0c689932a2fb6b62d3ab8ce04d7e936/svg"
+                        alt="https://twitter.com/kinopoiskru" loading="lazy" data-tid="9107e4a2" /></a><a
+                      class="styles_icon__cHky_" href="https://telegram.me/kinopoisk" target="_blank" rel="noopener noreferrer"
+                      aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/56833/9f570502e378d5e28a5a173a273fa811c4490a73/svg"
+                        alt="https://telegram.me/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+                      class="styles_icon__cHky_" href="https://www.instagram.com/kinopoisk/" target="_blank"
+                      rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/50064/c6b1a28b4bf580d4cf96ec7f262aace67a4dde2e/svg"
+                        alt="https://www.instagram.com/kinopoisk/" loading="lazy" data-tid="9107e4a2" /></a><a
+                      class="styles_icon__cHky_" href="https://www.youtube.com/user/kinopoisk" target="_blank"
+                      rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                        src="//avatars.mds.yandex.net/get-bunker/128809/65fe1abdd405eb82aec7490588a1ec6745d9ab87/svg"
+                        alt="https://www.youtube.com/user/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a></section>
+                  <ul class="footer__content-links styles_contentMenu__OgjQP">
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://yandex.ru/jobs/vacancies/dev/?from=kinopoisk&amp;services=kinopoisk" target="_blank"
+                        rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                        data-tid="2e9b873">Вакансии</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://yandex.ru/adv/products/display/kinopoiskmedia" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Реклама</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a href="/docs/usage/"
+                        target="_blank" rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                        data-tid="2e9b873">Соглашение</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://yandex.ru/support/kinopoisk/index.html" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Справка</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="/media/rubric/19/" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Блог</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://www.surveygizmo.eu/s3/90259271/" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Участие в исследованиях</a>
+                    </li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                        href="https://kinopoisk.userecho.com/" target="_blank" rel="noopener noreferrer"
+                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Предложения</a></li>
+                    <li class="footer__content-item styles_contentMenuItem__yTKp2"><button type="button"
+                        class="styles_contentButton__Yfvdh">Служба поддержки</button></li>
+                  </ul>
+                  <div class="styles_root__a_qyh styles_mobileAppsMenu__E1mGj styles_rootDark__ZR7rh" data-tid="358cef48"><a
+                      class="styles_store__JFbwQ"
+                      href="https://10267.redirect.appmetrica.yandex.com/mainView?appmetrica_tracking_id=170895231946863928"
+                      target="_blank" rel="noopener noreferrer" data-tid="7777859c"><img
+                        src="//avatars.mds.yandex.net/get-bunker/50064/9de0796ad18834328b4d4858b524bf8ce6f31f98/svg"
+                        alt="Загрузить приложение" loading="lazy" /></a><a class="styles_store__JFbwQ"
+                      href="https://redirect.appmetrica.yandex.com/serve/603240792315703184" target="_blank"
+                      rel="noopener noreferrer" data-tid="7777859c"><img
+                        src="//avatars.mds.yandex.net/get-bunker/994123/d4d889eb60c34ed8ca7d3c0fe965b8327e229fcf/svg"
+                        alt="Загрузить приложение" loading="lazy" /></a><a class="styles_store__JFbwQ"
+                      href="https://redirect.appmetrica.yandex.com/serve/1179706852124993595" target="_blank"
+                      rel="noopener noreferrer" data-tid="7777859c"><img
+                        src="//avatars.mds.yandex.net/get-bunker/128809/1b6561563c22de1014279a528719f4f7d9360296/svg"
+                        alt="Загрузить приложение" loading="lazy" /></a></div>
+                  <section class="styles_bottomSection__qx7AY footer__bottom">
+                    <div class="styles_bottomSectionInfo__0XSte footer__bottom-info">
+                      <div><span class="styles_year__tYQPp footer__bottom-info-year">© 2003 —
+                          <!-- -->2022
+                          <!-- -->,
+                        </span><a class="styles_bottomSectionInfoLink__Z8Szl footer__bottom-info-link"
+                          href="https://www.kinopoisk.ru/" target="_blank" rel="noopener noreferrer"
+                          data-tid="2e9b873">Кинопоиск</a><span class="styles_age__sKz6S footer__bottom-info-age">18
+                          <!-- -->+
+                        </span></div>
+                      <div class="styles_infoName__8KP42">Yandex Service AG</div>
+                    </div>
+                    <ul class="styles_bottomSectionMenu__kJDDt footer__bottom-links">
+                      <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                          href="https://tv.yandex.ru" target="_blank" rel="noopener noreferrer"
+                          class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Телепрограмма</a>
+                      </li>
+                      <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                          href="https://music.yandex.ru" target="_blank" rel="noopener noreferrer"
+                          class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Музыка</a></li>
+                      <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                          href="https://afisha.yandex.ru" target="_blank" rel="noopener noreferrer"
+                          class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Афиша</a></li>
+                    </ul>
+                    <div class="styles_companySection__2U1gC footer__bottom-company"><span
+                        class="styles_companySectionTitle__UUuEV footer__bottom-company-name">Проект компании</span><a
+                        class="styles_companyLogo__gDzdb footer__bottom-company-logo" href="https://yandex.ru" target="_blank"
+                        rel="noopener noreferrer" data-tid="2e9b873">Яндекс</a></div>
+                  </section>
+                </footer>
+              </div><button class="styles_root__p7NQg" type="button" data-tid="ed9136fe"><span
+                  class="styles_iconWrapper__VsEKC"><span class="styles_icon__6tiLC"></span></span></button>
+              <div class="styles_root__yEgpj styles_notifyTooltip__B_TG7" data-tid="2f7f876f"></div>
+            </div>
+            <div class="styles_progress__ZoYH9" hidden="" data-tid="c2959803">
+              <div class="styles_progressBar__p3Spc"></div>
+            </div>
+          </div>
+        </body>
+
+        </html>
+    """
+
+    private val movie3498Html: String = """
+        <!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width" />
+  <meta charSet="utf-8" />
+  <title data-tid="57f72b5">Властелин колец: Возвращение короля — Кинопоиск</title>
+  <meta name="theme-color" content="#1f1f1f" data-tid="57f72b5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" data-tid="57f72b5" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" data-tid="57f72b5" />
+  <meta name="apple-mobile-web-app-title" content="Кинопоиск" data-tid="57f72b5" />
+  <meta name="apple-itunes-app" content="app-id=477718890, ct=kp-web, pt=214944, mt=8" data-tid="57f72b5" />
+  <meta name="application-name" content="Кинопоиск" data-tid="57f72b5" />
+  <meta property="fb:app_id" content="121953784483000" data-tid="57f72b5" />
+  <meta property="fb:pages" content="152308956519" data-tid="57f72b5" />
+  <meta property="og:site_name" content="Кинопоиск" data-tid="57f72b5" />
+  <meta name="msapplication-TileColor" content="#000" data-tid="57f72b5" />
+  <meta name="msapplication-TileImage"
+    content="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+    data-tid="57f72b5" />
+  <meta name="msapplication-config" content="//st.kp.yandex.net/public/xml/ieconfig.xml" data-tid="57f72b5" />
+  <link rel="mask-icon"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-16.svg"
+    data-tid="57f72b5" />
+  <link rel="apple-touch-icon-precomposed"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/apple-favicon-152.png"
+    data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-57.png" sizes="57x57"
+    data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-76.png" sizes="76x76"
+    data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-96.png" sizes="96x96"
+    data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-120.png"
+    sizes="120x120" data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-128.png"
+    sizes="128x128" data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+    sizes="144x144" data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-152.png"
+    sizes="152x152" data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-180.png"
+    sizes="180x180" data-tid="57f72b5" />
+  <link rel="icon" type="image/png"
+    href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-196.png"
+    sizes="196x196" data-tid="57f72b5" />
+  <link rel="icon" href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-64.ico"
+    data-tid="57f72b5" />
+  <link rel="search" type="application/opensearchdescription+xml" title="Поиск на kinopoisk.ru" href="/kp_search.xml"
+    data-tid="57f72b5" />
+  <meta name="description"
+    content="Повелитель сил тьмы Саурон направляет свою бесчисленную армию под стены Минас-Тирита, крепости Последней Надежды. Он предвкушает близкую победу, но именно это мешает ему заметить две крохотные фигурки — хоббитов, приближающихся к Роковой Горе, где им предстоит уничтожить Кольцо Всевластья."
+    data-tid="57f72b5" />
+  <meta name="keywords"
+    content="Властелин колец: Возвращение короля — Кинопоиск The Lord of the Rings: The Return of the King фильм сериал кино обои фотографии сеансы афиша обзор комментарии рейтинг факты отзывы кадры новости сайт"
+    data-tid="57f72b5" />
+  <link type="application/rss+xml" rel="alternate" title="RSS" href="/news.rss" data-tid="57f72b5" />
+  <link rel="canonical" href="https://www.kinopoisk.ru/film/3498/" data-tid="57f72b5" />
+  <meta property="og:title"
+    content="«Властелин колец: Возвращение короля» (The Lord of the Rings: The Return of the King, 2003)"
+    data-tid="57f72b5" />
+  <meta property="twitter:title"
+    content="«Властелин колец: Возвращение короля» (The Lord of the Rings: The Return of the King, 2003)"
+    data-tid="57f72b5" />
+  <meta property="og:description"
+    content="Повелитель сил тьмы Саурон направляет свою бесчисленную армию под стены Минас-Тирита, крепости Последней Надежды. Он предвкушает близкую победу, но именно это мешает ему заметить две крохотные фигурки — хоббитов, приближающихся к Роковой Горе, где им предстоит уничтожить Кольцо Всевластья."
+    data-tid="57f72b5" />
+  <meta property="twitter:description"
+    content="Повелитель сил тьмы Саурон направляет свою бесчисленную армию под стены Минас-Тирита, крепости Последней Надежды. Он предвкушает близкую победу, но именно это мешает ему заметить две крохотные фигурки — хоббитов, приближающихся к Роковой Горе, где им предстоит уничтожить Кольцо Всевластья."
+    data-tid="57f72b5" />
+  <meta property="og:url" content="https://www.kinopoisk.ru/film/3498/" data-tid="57f72b5" />
+  <meta property="og:image"
+    content="https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/df52c8a5-2141-40c5-9bf8-51dbb5e0de32/1200x630"
+    data-tid="57f72b5" />
+  <meta property="vk:image"
+    content="https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/df52c8a5-2141-40c5-9bf8-51dbb5e0de32/1200x630"
+    data-tid="57f72b5" />
+  <meta name="twitter:image"
+    content="https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/df52c8a5-2141-40c5-9bf8-51dbb5e0de32/1200x630"
+    data-tid="57f72b5" />
+  <meta property="og:image:width" content="1200" data-tid="57f72b5" />
+  <meta property="og:image:height" content="630" data-tid="57f72b5" />
+  <meta name="twitter:site" content="kinopoiskru" data-tid="57f72b5" />
+  <meta name="twitter:card" content="summary_large_image" data-tid="57f72b5" />
+  <meta property="og:type" content="website" data-tid="57f72b5" />
+  <link rel="alternate" href="android-app://ru.kinopoisk/https/www.kinopoisk.ru/film/3498/" data-tid="57f72b5" />
+  <link rel="alternate" href="ios-app://EK7Z26L6D4.ru.kinopoisk/https/www.kinopoisk.ru/film/3498/" data-tid="57f72b5" />
+  <meta name="next-head-count" content="47" />
+  <link rel="preload" as="script" href="https://yandex.ru/ads/system/context.js" crossorigin="anonymous"
+    data-tid="db024bc5" />
+  <link rel="manifest"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/pwa-manifests/production.json"
+    crossorigin="anonymous" data-tid="74a9c6bc" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+    crossorigin="anonymous" data-n-g="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+    crossorigin="anonymous" data-n-p="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+    crossorigin="anonymous" data-n-p="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+    crossorigin="anonymous" data-n-p="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+    crossorigin="anonymous" data-n-p="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+    crossorigin="anonymous" data-n-p="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+    crossorigin="anonymous" data-n-p="" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+    crossorigin="anonymous" />
+  <link rel="preload"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+    as="style" crossorigin="anonymous" />
+  <link rel="stylesheet"
+    href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+    crossorigin="anonymous" /><noscript data-n-css=""></noscript>
+</head>
+
+<body class="body" data-tid="f8463833">
+  <div id="__next" data-reactroot="">
+    <div class="styles_root__hSE6c styles_promoPopover__pKHxa" data-tid="d504712e"><button type="button"
+        class="styles_closeButton__LEexp"><span class="styles_closeButtonIcon__w69HE"></span></button></div>
+    <div class="styles_root__vsmL9" data-tid="2781b874">
+      <div class="styles_root__BJH2_ styles_headerContainer__sFBK8" data-tid="1d1e4a8c">
+        <header class="styles_root__jlo2L styles_header__0LyFn styles_rootDark__nQDyF" data-tid="63b05890">
+          <div class="header-navigation styles_navigation__S8raz styles_navigationDark__x0vdW">
+            <div class="styles_logoContainer__G47EP">
+              <div class="styles_root__jfc_s" data-tid="911e2f4d">
+                <div class=""><button class="styles_root__coHaQ styles_burger__HcbjK" type="button"
+                    data-tid="8ed90190"><span class="styles_icon__J3wes" style="color:#999999"></span></button>
+                  <div class="styles_dropdown__MqT__ styles_dropdownOpen__mTn_V styles_dropdownDefault__KwZHT"
+                    data-tid="585eb7c0">
+                    <div class="styles_dropdownMenu__bouwC styles_dropdownMenu__c7FZ4 styles_dropdownMenuDark__NzGxR">
+                      <div class="styles_navigationMenu__c_jLJ styles_root__RBtQR" data-tid="e500879d"><a href="/"
+                          class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                            class="styles_icon__PXEHs"
+                            src="https://avatars.mds.yandex.net/get-bunker/128809/4d6f5bd4e839b166859243f82e9fdeb3bc910931/svg"
+                            data-tid="b35288c1" />Главная</a><a href="https://hd.kinopoisk.ru/"
+                          class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                            class="styles_icon__PXEHs"
+                            src="https://avatars.mds.yandex.net/get-bunker/61205/478c72b68bc4ac507483b2676994bbc1df5f05be/svg"
+                            data-tid="b35288c1" />Онлайн-кинотеатр</a><a href="/lists/categories/movies/1/"
+                          class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                            class="styles_icon__PXEHs"
+                            src="https://avatars.mds.yandex.net/get-bunker/50064/ab24b8099cb4ca11c08b0def91dc5c1d4fd78649/svg"
+                            data-tid="b35288c1" />Фильмы</a><a href="/lists/categories/movies/3/"
+                          class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                            class="styles_icon__PXEHs"
+                            src="https://avatars.mds.yandex.net/get-bunker/61205/9daeaf410906b5794685b7b5bb25dfd2c647fccf/svg"
+                            data-tid="b35288c1" />Сериалы</a><a href="/afisha/new/"
+                          class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                            class="styles_icon__PXEHs"
+                            src="https://avatars.mds.yandex.net/get-bunker/118781/ae7fbfc1773a6bbd61ee0154628c6fe14bf6959e/svg"
+                            data-tid="b35288c1" />Билеты в кино</a><a href="/media/"
+                          class="styles_root__7mPJN styles_darkThemeItem__E_aGY" data-tid="de7c6530"><img loading="lazy"
+                            class="styles_icon__PXEHs"
+                            src="https://avatars.mds.yandex.net/get-bunker/118781/960a47a181b1b0a28ceb45a075e64c1a9378442c/svg"
+                            data-tid="b35288c1" />Медиа</a></div>
+                    </div>
+                  </div>
+                </div><a href="/" class="styles_root__dYidr styles_logo___bcop" data-tid="d4e8d214"><img
+                    class="styles_img__3hWmL kinopoisk-header-logo__img" alt="Кинопоиск"
+                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTY0IiBoZWlnaHQ9IjM2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNTguODU5IDE4YzAtNS44ODkgMi45NTQtMTAuNiA4LjI4MS0xMC42IDUuMzI4IDAgOC4yODEgNC43MTEgOC4yODEgMTAuNiAwIDUuODktMi45NTQgMTAuNi04LjI4IDEwLjYtNS4zMjggMC04LjI4Mi00LjcxLTguMjgyLTEwLjZabTguMjgxIDcuNjZjMi4wNzIgMCAyLjk1NC0zLjUzNCAyLjk1NC03LjY1MiAwLTQuMTItLjg4OS03LjY1Mi0yLjk1NC03LjY1Mi0yLjA2NSAwLTIuOTU0IDMuNTMzLTIuOTU0IDcuNjUyLS4wMDcgNC4xMTguODgyIDcuNjUyIDIuOTU0IDcuNjUyWk0zLjg0MyA3Ljd2NS41OTZoLjI5NEw3Ljk4IDcuN2g1LjMybC03LjA5OCA2LjQ3NC4yOTQuMjkzTDE5LjUxIDcuNjkzdjQuNzExTDcuOTczIDE2LjUyM3YuMjkybDExLjUzNy0xLjAyOHY0LjQxOUw3Ljk3MyAxOS4xNzh2LjI5M2wxMS41MzcgNC4xMTh2NC43MTJMNi40OTYgMjEuNTI2bC0uMjk0LjI5MyA3LjA5OCA2LjQ3NEg3Ljk4bC0zLjg0My01LjU5NmgtLjI5NHY1LjU5NkgwVjcuNjg2aDMuODQzVjcuN1ptMTkuMjMgMEgyOC4xbC0uMjk0IDEyLjM2M2guMjk0TDM0LjAxNSA3LjdoNC40Mzh2MjAuNjA4aC01LjAyNmwuMjk0LTEyLjM2NGgtLjI5NEwyNy41MSAyOC4zMDloLTQuNDM4VjcuN1ptMjMuOTU1IDBoLTUuMDI2djIwLjYwOGg1LjAyNnYtOS4xM2g0LjEzN3Y5LjEzaDUuMDI2VjcuN2gtNS4wMjZ2Ny45NTJoLTQuMTM3VjcuN1ptNDUuMjUgMGgtMTQuMTl2MjAuNjA4aDUuMDI3VjExLjIzM2g0LjEzN3YxNy4wNzVoNS4wMjZWNy43Wm0yLjY2IDEwLjNjMC01Ljg4OSAyLjk1NC0xMC42IDguMjgyLTEwLjYgNS4zMiAwIDguMjgxIDQuNzExIDguMjgxIDEwLjYgMCA1Ljg5LTIuOTU0IDEwLjYtOC4yODEgMTAuNi01LjMyIDAtOC4yODItNC43MS04LjI4Mi0xMC42Wm04LjI4MiA3LjY2YzIuMDcyIDAgMi45NTQtMy41MzQgMi45NTQtNy42NTIgMC00LjEyLS44ODktNy42NTItMi45NTQtNy42NTItMi4wNzIgMC0yLjk1NCAzLjUzMy0yLjk1NCA3LjY1MiAwIDQuMTE4Ljg4MiA3LjY1MiAyLjk1NCA3LjY1MlpNMTE5LjE4NyA3LjdoLTUuMDI2djIwLjYwOGg0LjQzOGw1LjkxNi0xMi4zNjRoLjI5NGwtLjI5NCAxMi4zNjRoNS4wMjZWNy43aC00LjQzOGwtNS45MTYgMTIuMzYzaC0uMjk0bC4yOTQtMTIuMzYzWm0yMy42NjkgMTMuNTQxIDQuNzMyLjU4NWMtLjg4OSA0LjEyLTIuOTU0IDYuNzc0LTcuMzY0IDYuNzc0LTUuMzIgMC04LjAxNi00LjcxLTguMDE2LTEwLjYgMC01Ljg4OSAyLjY4OS0xMC42IDguMDE2LTEwLjYgNC4zMTcgMCA2LjQ3NSAyLjY0OSA3LjM2NCA2LjQ3NWwtNC43MzIgMS4xNzdjLS4yOTQtMi4wNjMtMS4xNTUtNC43MS0yLjYzMi00LjcxLTEuNzcxIDAtMi42ODkgMy41MzMtMi42ODkgNy42NTEgMCA0LjA5LjkxOCA3LjY1MiAyLjY4OSA3LjY1MiAxLjQ0OS4wMTUgMi4zMy0yLjM0MSAyLjYzMi00LjQwNFptMTEuODMtMTMuNTRoLTQuNzMydjIwLjYwN2g0LjczMnYtOS4xM2guMjk0bDMuNTQ5IDkuMTNIMTY0bC01LjE3Ny0xMC42TDE2My44NDkgNy43aC01LjAyNmwtMy44NDMgOS4xM2gtLjI5NFY3LjdaIiBmaWxsPSIjZmZmIi8+PC9zdmc+Cg=="
+                    data-tid="79e4350" /></a>
+              </div>
+            </div>
+            <div class="styles_mainContainer__faOVn">
+              <div class="styles_featureMenuContainer__KbrzA">
+                <nav class="styles_root__DR_oz kinopoisk-header-featured-menu styles_adaptive__F508O"
+                  data-tid="78f04c5d"><a
+                    class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                    href="https://hd.kinopoisk.ru/" target="_self" data-tid="acc26a70"><img aria-label="presentation"
+                      class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                      src="https://avatars.mds.yandex.net/get-bunker/118781/5e4a451dabd5982b775db20bc084cc215fd0e14a/svg"
+                      srcSet="" data-tid="b35288c1" /><img aria-label="presentation" class="styles_icon__IXP4s"
+                      src="https://avatars.mds.yandex.net/get-bunker/61205/70cc2c1c559189c3139a315b1d06db38faefa2b5/svg"
+                      srcSet="" data-tid="b35288c1" />Онлайн-кинотеатр</a><a
+                    class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                    href="https://www.kinopoisk.ru/special/smarttv_instruction?utm_source=kinopoisk&amp;utm_medium=selfpromo_kp&amp;utm_campaign=button_header"
+                    target="_blank" data-tid="acc26a70"><img aria-label="presentation"
+                      class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                      src="https://avatars.mds.yandex.net/get-bunker/50064/9bd69a8ca16bd1fa7395dba2ab3082c4bebd306c/svg"
+                      srcSet="" data-tid="b35288c1" /><img aria-label="presentation" class="styles_icon__IXP4s"
+                      src="https://avatars.mds.yandex.net/get-bunker/61205/c7ca1a7300068a2cf01c57a1f351ba9d89c20ee3/svg"
+                      srcSet="" data-tid="b35288c1" />Установить на ТВ</a></nav>
+              </div>
+              <div class="styles_searchFormContainer__GyAL5">
+                <div class="styles_searchForm__AIMFU styles_searchFormDefault__QNml_" data-tid="8d7d7cbd">
+                  <form class="styles_form__i86wS" action="/index.php">
+                    <div class="styles_root__dTeXi styles_searchInputElement__qNbS4" data-tid="b0e8f9b"><input
+                        type="text" name="kp_query"
+                        class="styles_input__4vNAb kinopoisk-header-search-form-input__input" autoComplete="off"
+                        aria-label="Фильмы, сериалы, персоны" placeholder="Фильмы, сериалы, персоны" value=""
+                        required="" />
+                      <div class="styles_controlContainer__5VetH kinopoisk-header-search-form-input__control-container">
+                        <a href="/s/" class="styles_advancedSearch__uwvnd" aria-label="advanced-search"
+                          tabindex="-1"><svg class="styles_advancedSearchIcon__Zxjax" xmlns="http://www.w3.org/2000/svg"
+                            width="18" height="18" viewBox="0 0 18 18">
+                            <path fill="#000" fill-rule="evenodd"
+                              d="M5.995 10.3A2.7 2.7 0 0 1 8.504 12H17v2H8.504a2.7 2.7 0 0 1-5.018 0H1v-2h2.486a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm5.997-8.7A2.7 2.7 0 0 1 14.5 5H17v2h-2.5a2.7 2.7 0 0 1-5.017 0H1V5h8.483a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z">
+                            </path>
+                          </svg></a><button type="submit" class="styles_root__CUh_v styles_submit__2AIpj"
+                          aria-label="submit" tabindex="-1" data-tid="f49ca51f"><svg
+                            class="styles_icon__1bYKL search-form-submit-button__icon"
+                            xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                            <path fill="#000" fill-rule="evenodd"
+                              d="M12.026 10.626L16 14.6 14.6 16l-3.974-3.974a5.5 5.5 0 1 1 1.4-1.4zM7.5 11.1a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2z">
+                            </path>
+                          </svg>Найти</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="styles_userContainer__hLiRQ"><button type="button" class="styles_searchButton__kXYs6"><span
+                  class="styles_searchButtonIconSmall__poB4V"></span></button>
+              <div class="styles_root__JgDCj" data-tid="1a82203d">
+                <div><a
+                    class="styles_plusDesktopBrandingButton__X4z6T styles_root__OkfMY styles_padding4x14__J5WqH styles_root__lbhjd styles_rootLight__4o4CJ styles_rootPlus__Xx9Yy"
+                    href="https://hd.kinopoisk.ru/?source=kinopoisk_head_button">Попробовать Плюс</a></div><button
+                  type="button" class="styles_loginButton__LWZQp">Войти</button>
+              </div>
+            </div>
+          </div>
+        </header>
+      </div>
+      <div class="styles_contentContainer__bi2n2 styles_baseContainer__8XBMw">
+        <div class="styles_pending__AMNhR styles_height250__Dw0ef" data-tid="a913e1e7">
+          <div class="styles_themeTopBanner__RLKkf" data-tid="e810e001">
+            <div id="foxaddesktop_top_banner" class="styles_container__XXCpX" data-tid="9501d3f4"></div>
+          </div>
+        </div>
+        <div class="styles_root__B1q5W styles_withBottomBorder__qPxdr styles_rootLight___QD_Q styles_root__axj8R"
+          data-tid="21855542">
+          <div class="styles_background__ME0M5"></div>
+          <div class="styles_root__UtArQ" data-tid="3716659c">
+            <div class="styles_root__2kxYy" data-tid="914bd01c">
+              <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP"
+                data-tid="893da4ad">
+                <div class="styles_sidebar__mZOfP">
+                  <div class="styles_root__JykRA styles_basicMediaSection__l88k1" data-tid="be907ee0">
+                    <div class="styles_posterContainer__F02wH">
+                      <div class="styles_root__0qoat" data-tid="fe27f3c4"><a class="styles_posterLink__C1HRc"
+                          href="/film/3498/posters/"><img
+                            class="film-poster styles_root__24Jga styles_rootInLight__GwYHH image styles_root__DZigd"
+                            alt="Властелин колец: Возвращение короля (The Lord of the Rings: The Return of the King)"
+                            src="//avatars.mds.yandex.net/get-kinopoisk-image/4303601/e410c71f-baa1-4fe5-bb29-aedb4662f49b/300x450"
+                            srcSet="//avatars.mds.yandex.net/get-kinopoisk-image/4303601/e410c71f-baa1-4fe5-bb29-aedb4662f49b/300x450 1x, //avatars.mds.yandex.net/get-kinopoisk-image/4303601/e410c71f-baa1-4fe5-bb29-aedb4662f49b/600x900 2x"
+                            data-tid="d813cf42" /></a><a
+                          class="styles_soundtrackButton__MiEe0 styles_soundtrackButton__D5WNc"
+                          href="/film/3498/tracks/" data-tid="4113d3fe">soundtracks</a></div>
+                    </div>
+                    <div class="styles_trailerContainer__OrL6j styles_section__OVMys">
+                      <div class="film-trailer styles_rootInLight__Cjmob styles_rootSmSize__SXey8" data-tid="cc89b13d">
+                        <div role="button" tabindex="0" class="styles_previewWithAction__24bFH styles_preview__ruOp9">
+                          <img class="styles_previewImg__zhMic image styles_root__DZigd" alt="Трейлер (русский язык)"
+                            src="//avatars.mds.yandex.net/get-kino-vod-films-gallery/28788/807a048b5e9e4b45f8542ea85403aae1/100x64_3"
+                            srcSet="//avatars.mds.yandex.net/get-kino-vod-films-gallery/28788/807a048b5e9e4b45f8542ea85403aae1/100x64_3 1x, //avatars.mds.yandex.net/get-kino-vod-films-gallery/28788/807a048b5e9e4b45f8542ea85403aae1/600x380 2x"
+                            data-tid="d813cf42" />
+                          <div class="styles_previewInfo__fZqll styles_mainTrailerPreviewInfo__6fFSL"><button
+                              type="button" class="styles_root__2V17R" data-tid="f1f187d8">Трейлер</button><span
+                              class="styles_duration__BiWBm">3:06</span></div>
+                        </div><a class="styles_title__vd96O" href="/film/3498/video/41444/">Трейлер (русский
+                          язык)</a><span class="styles_date__d5xwh">13 февраля 2011</span>
+                      </div>
+                    </div>
+                    <div class="styles_userControlsContainer__iYP9P styles_section__OVMys">
+                      <div class="styles_controlContainer__5hjSk" data-tid="5310ddc0">
+                        <div class="styles_foldersMenu__R90ST styles_root__g0CT9" data-tid="4a36b453">
+                          <div class="styles_root__VEPvG styles_buttonSet____zRE" data-tid="62abee53"><button
+                              class="styles_button__MpYNC styles_listToWatchButton__N_ywG styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn">Буду
+                              смотреть</button><button
+                              class="styles_button__MpYNC styles_root__v9qoq styles_rootLight__njjLZ styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                class="styles_tooltip__BZYE_" data-tid="d43912a6">Добавить в список</span></button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_rootLight__C8Tx2 styles_root__dZcuU" data-tid="e5bec5b3"><a
+                          href="/film/3498/folders/" class="styles_linkLight__etoyZ styles_link___yiZO">Все папки
+                          пользователей</a></div>
+                    </div>
+                    <div class="styles_socialControlsContainer__7mYQK">
+                      <div class="styles_root__2kxYy" data-tid="914bd01c">
+                        <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim" data-tid="893da4ad">
+                          <div class="styles_share__4uBuh styles_root__MJ3vO" data-tid="755217e">
+                            <div id="film-share-buttons"></div>
+                            <div class="styles_root__vr1TL" data-tid="7cfcb140"><span
+                                class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                                class="styles_button__BSoLb styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_root__2kxYy" data-tid="914bd01c">
+                        <div
+                          class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_root__wNLLi styles_feedbackButtons__i2cPM"
+                          data-tid="893da4ad">
+                          <div class="styles_wrapper__rcDa_" data-tid="d43e8a06"><button type="button"
+                              class="styles_buttonError__P0JjC styles_button__qRXLB">Нашли ошибку?</button><button
+                              type="button" class="styles_buttonInfo__gH8CS styles_button__qRXLB">Добавить инфо</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT styles_delimiter__rPlVI"></div>
+              <div class="styles_column__r2MWX styles_md_17__FaWtp styles_lg_21__YjFTk styles_column__5dEFP"
+                data-tid="893da4ad">
+                <div class="styles_main__vjk2Q styles_main__ZXV8U">
+                  <div class="styles_root__4VfvJ styles_basicInfoSection__EiD2J" data-tid="bb43fc51">
+                    <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                        <div class="styles_header__mzj3d">
+                          <div class="styles_title__hTCAr" data-tid="b97a4e4c">
+                            <h1
+                              class="styles_title__65Zwx styles_root__l9kHe styles_root__5sqsd styles_rootInLight__juoEZ"
+                              itemProp="name"><span data-tid="75209b22">Властелин колец: Возвращение короля
+                                (2003)</span></h1>
+                            <div class="styles_root__LIL2v styles_rootInLight__YFjWB" data-tid="7cdbd36a"><span
+                                class="styles_originalTitle__JaNKM" data-tid="eb6be89">The Lord of the Rings: The Return
+                                of the King</span><span
+                                class="styles_rootSmallFaded__LiPsm styles_rootSmallFadedInLight__eENN6"
+                                data-tid="5c1ffa33">12+</span></div>
+                          </div>
+                          <div class="styles_buttons__SNIXo">
+                            <div class="styles_buttonsContainer__HREZO" data-tid="ebd410f">
+                              <div class="styles_button__tQYKG">
+                                <div class="style_root__BmiQ7" data-tid="be0d3e42"><button
+                                    class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_withIconLeft__xpAII"
+                                    title="Буду смотреть"><span class="style_iconLeft__vU_kH" data-tid="c8f29373"><span
+                                        class="style_icon__QLJtP style_iconLight__o7Xai"></span></span>Буду
+                                    смотреть</button></div>
+                              </div>
+                              <div class="styles_button__tQYKG">
+                                <div class="style_root__eRD4o" data-tid="17569662">
+                                  <div class="style_root__Bt5S1" data-tid="818a5033"><button
+                                      class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_withIconLeft__xpAII style_onlyIcon__D09QE"><span
+                                        class="style_iconLeft__vU_kH" data-tid="c8f29373"><span
+                                          class="style_icon__V3VQE style_dropdownButtonIconLight__A2zd0"
+                                          data-tid="e07f9f7b"></span></span></button></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="styles_watchingServices__0VLui">
+                            <div data-tid="e8c5d94f">
+                              <div class="style_header__ZPNFN" data-tid="c456f2ce">
+                                <h3
+                                  class="film-page-section-title styles_rootTitle__2g8Sk style_title__DoU6X styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                  <div class="styles_titleWithMoreItem__rTA7s" data-tid="6a319a9e">Где смотреть<span
+                                      class="styles_moreItem__U5bzS">3</span></div>
+                                </h3><button
+                                  class="style_toggleButton__QSI86 style_toggleButtonLight__Y82uX style_toggleButtonShown__K6ncs"
+                                  aria-label="Свернуть" type="button"></button>
+                              </div>
+                              <div class="style_contentWrapper__iT6JH style_isShownByDefault__Egt0Q"
+                                data-tid="d0682e1e">
+                                <div class="style_content__L6r_p style_isShown__juLBS">
+                                  <div class="" data-tid="c456f2ce">
+                                    <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                        href="https://www.ivi.ru/watch/64239?utm_source=yandex&amp;utm_medium=wizard"
+                                        target="_blank" rel="noopener noreferrer"
+                                        class="styles_root__b5Uwf styles_rootLight__5uLlo" data-tid="5f829942"><span
+                                          class="styles_logo__SNt5e"><img
+                                            class="style_root__KgLcy image styles_root__DZigd"
+                                            src="//avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig"
+                                            srcSet="//avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig 1x, //avatars.mds.yandex.net/get-ott/1672343/a8dc1dd4-e7b2-4984-ad33-242b79cb5307/orig 2x"
+                                            data-tid="d813cf42" /></span><span
+                                          class="styles_title__434hO">IVI</span></a></div>
+                                    <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                        href="https://kion.ru/video/movie/471042253?utm_source=yandex&amp;utm_medium=wizard"
+                                        target="_blank" rel="noopener noreferrer"
+                                        class="styles_root__b5Uwf styles_rootLight__5uLlo" data-tid="5f829942"><span
+                                          class="styles_logo__SNt5e"><img
+                                            class="style_root__KgLcy image styles_root__DZigd"
+                                            src="//avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig"
+                                            srcSet="//avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig 1x, //avatars.mds.yandex.net/get-ott/239697/daeb142e-3ecc-4bb2-9bff-4827996643ab/orig 2x"
+                                            data-tid="d813cf42" /></span><span
+                                          class="styles_title__434hO">KION</span></a></div>
+                                    <div class="style_item__coMvy" data-tid="c456f2ce"><a
+                                        href="https://tv.apple.com/ru/movie/umc.cmc.57s6i23z9ry0zsgwwc2mxjqi6"
+                                        target="_blank" rel="noopener noreferrer"
+                                        class="styles_root__b5Uwf styles_rootLight__5uLlo" data-tid="5f829942"><span
+                                          class="styles_logo__SNt5e"><img
+                                            class="style_root__KgLcy image styles_root__DZigd"
+                                            src="//avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig"
+                                            srcSet="//avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig 1x, //avatars.mds.yandex.net/get-ott/239697/0ba59459-f965-4089-9e26-4aa9184c7262/orig 2x"
+                                            data-tid="d813cf42" /></span><span class="styles_title__434hO">Apple
+                                          TV</span></a></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb" data-tid="893da4ad">
+                        <div class="styles_root__lMV74 styles_filmRating__H_B11" data-tid="86be324">
+                          <div class="film-rating styles_root__7rVf_ styles_rootMSize__B8Ch0 styles_rootInLight__4w53g"
+                            data-tid="71598065">
+                            <div class="styles_ratingValue__UO6Zl styles_rootMSize__B8Ch0">
+                              <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><span
+                                    class="film-rating-value styles_rootPositive__mLBSO">8.6</span></span></div>
+                              <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">516 783
+                                  оценки</span></div>
+                            </div>
+                          </div>
+                          <div class="styles_kinopoiskRatingSnippet__tqtsG">
+                            <div class="style_root__tg2Nx" data-tid="410c06ef"><button
+                                class="style_button__LAvI6 style_buttonMedium__Z93fP style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_fullWidth__ib6MF">Оценить
+                                фильм</button></div>
+                          </div>
+                          <div class="styles_reviewsLink__5xOtO">
+                            <div class="styles_reviewCountLight__XNZ9P styles_reviewCount__w_RrM" data-tid="d87cf2dd">
+                              243 рецензии</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                        <h3
+                          class="film-page-section-title styles_rootTitle__2g8Sk styles_tableHeader__HdxpN styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                          О фильме</h3>
+                        <div class="" data-test-id="encyclopedic-table" data-tid="bd126b5e">
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Год производства</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="cfbe5a01"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/lists/movies/year--2003/?b=films&amp;b=top">2003</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Страна</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/lists/movies/country--35/?b=films&amp;b=top" data-tid="603f73a4">Новая
+                                Зеландия</a>, <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/lists/movies/country--1/?b=films&amp;b=top" data-tid="603f73a4">США</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Жанр</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__5PEXQ"
+                              data-tid="28726596">
+                              <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                  class="styles_linkDark__7m929 styles_link__3QfAk"
+                                  href="/lists/movies/genre--fantasy/?b=films&amp;b=top"
+                                  data-tid="603f73a4">фэнтези</a>, <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                  href="/lists/movies/genre--adventure/?b=films&amp;b=top"
+                                  data-tid="603f73a4">приключения</a>, <a
+                                  class="styles_linkDark__7m929 styles_link__3QfAk"
+                                  href="/lists/movies/genre--drama/?b=films&amp;b=top" data-tid="603f73a4">драма</a>
+                              </div><a href="/film/3498/keywords/"
+                                class="styles_linkDark__7m929 styles_link__3QfAk keywords">слова</a>
+                            </div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Слоган</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                              <div class="styles_valueDark__BCk93 styles_value__g6yP4">«There can be no triumph without
+                                loss. No victory without suffering. No freedom without sacrifice»</div>
+                            </div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Режиссер</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/32383/"
+                                data-tid="603f73a4">Питер Джексон</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Сценарий</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/32385/"
+                                data-tid="603f73a4">Фрэн Уолш</a>, <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/name/32386/" data-tid="603f73a4">Филиппа Бойенс</a>, <a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/32383/"
+                                data-tid="603f73a4">Питер Джексон</a>, <a href="/film/3498/cast/who_is/writer/"
+                                class="styles_linkDark__7m929 styles_link__3QfAk">...</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Продюсер</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/32383/"
+                                data-tid="603f73a4">Питер Джексон</a>, <a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/4972887/"
+                                data-tid="603f73a4">Eric Monette</a>, <a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/23361/"
+                                data-tid="603f73a4">Барри М. Осборн</a>, <a href="/film/3498/cast/who_is/producer/"
+                                class="styles_linkDark__7m929 styles_link__3QfAk">...</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Оператор</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/225142/"
+                                data-tid="603f73a4">Эндрю Лесни</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Композитор</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/142716/"
+                                data-tid="603f73a4">Говард Шор</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Художник</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/425445/"
+                                data-tid="603f73a4">Грант Мейджор</a>, <a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/2010661/"
+                                data-tid="603f73a4">Джо Бликли</a>, <a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/name/2004690/" data-tid="603f73a4">Саймон Брайт</a>, <a
+                                href="/film/3498/cast/who_is/design/"
+                                class="styles_linkDark__7m929 styles_link__3QfAk">...</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Монтаж</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/name/41166/"
+                                data-tid="603f73a4">Джэми Селкирк</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Бюджет</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="cfbe5a01"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/film/3498/box/">${'$'}94 000 000</a>
+                            </div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Маркетинг</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="cfbe5a01"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/film/3498/box/">${'$'}50 000 000</a>
+                            </div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Сборы в США</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                              data-tid="41068c56"><a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/film/3498/box/">${'$'}377 027 325</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Сборы в мире</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                              data-tid="41068c56"><a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/film/3498/box/">+ ${'$'}763 654 686 = ${'$'}1 140 682 011</a><a href="/film/3498/box/"
+                                class="styles_linkDark__7m929 styles_link__3QfAk">сборы</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Зрители</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="328581d6"><span
+                                class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-1.gif"
+                                  alt="США" class="styles_icon__tVSsA" />61.9 млн </span>, <span
+                                class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-11.gif"
+                                  alt="Великобритания" class="styles_icon__tVSsA" />12.2 млн </span>, <span
+                                class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                data-tid="59164a46"><img src="https://st.kp.yandex.net/images/flags/flag-3.gif"
+                                  alt="Германия" class="styles_icon__tVSsA" />10.4 млн </span>, <a
+                                href="/film/3498/dates/" class="styles_linkDark__7m929 styles_link__3QfAk">...</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Сборы в России</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                              data-tid="41068c56"><a class="styles_linkDark__7m929 styles_link__3QfAk"
+                                href="/film/3498/box/">${'$'}14 085 000</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Премьера в Росcии</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="ca30f216"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/premiere/ru/2004/to/3498/#3498"
+                                data-tid="3aaab4fd">22 января 2004</a>, <a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/lists/m_act[company]/12/"
+                                data-tid="3aaab4fd">«Каро-Премьер»</a><span class="styles_stickers__hGaZH"></span></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Премьера в мире</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/film/3498/dates/"
+                                data-tid="603f73a4">1 декабря 2003</a>, <a href="/film/3498/dates/"
+                                class="styles_linkDark__7m929 styles_link__3QfAk">...</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Ре-релиз (РФ)</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="d5ff4cc"><a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/premiere/ru/2021/to/3498/#3498"
+                                data-tid="603f73a4">29 апреля 2021</a>, <a
+                                class="styles_linkDark__7m929 styles_link__3QfAk" href="/lists/m_act[company]/140/"
+                                data-tid="603f73a4">«UPI»</a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Релиз на DVD</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                              <div class="styles_valueDark__BCk93 styles_value__g6yP4">25 мая 2004, «Premier Digital»
+                              </div>
+                            </div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Релиз на Blu-ray</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                              <div class="styles_valueDark__BCk93 styles_value__g6yP4">6 апреля 2010, «Юниверсал Пикчерс
+                                Рус»</div>
+                            </div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Возраст</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                              data-tid="b7fd8541"><a class="styles_restrictionLink__iy4n9"><span
+                                  class="styles_rootHighContrast__Bevle styles_rootHighContrastInLight__513Hu"
+                                  data-tid="5c1ffa33">12+</span></a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Рейтинг MPAA</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                              data-tid="b7fd8541"><a class="styles_restrictionLink__iy4n9"
+                                href="/film/3498/rn/PG-13/"><span
+                                  class="styles_rootHighContrast__Bevle styles_rootHighContrastInLight__513Hu"
+                                  data-tid="5c1ffa33">PG-13</span><span
+                                  class="styles_restrictionDescription__4j5Pk styles_valueDark__BCk93 styles_value__g6yP4">детям
+                                  до 13 лет просмотр не желателен</span></a></div>
+                          </div>
+                          <div class="styles_rowDark__ucbcz styles_row__da_RK" data-tid="7cda04a5">
+                            <div class="styles_titleDark___tfMR styles_title__b1HVo">Время</div>
+                            <div class="styles_valueDark__BCk93 styles_value__g6yP4" data-tid="e1e37c21">
+                              <div class="styles_valueDark__BCk93 styles_value__g6yP4">201 мин. / 03:21</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb" data-tid="893da4ad">
+                        <div class="styles_mainSide__qVMH4 styles_mainSideWithTopList__R4sMm">
+                          <div class="styles_topList__1xtLA styles_topListLight___o0qM" data-tid="d3ba9b85"><a
+                              class="styles_root__UjpdS styles_rootLight__6WKJd" href="/lists/movies/top250/"
+                              data-tid="2c52e3fd">
+                              <div class="styles_root__ixhBE styles_icon__0l7mg styles_size41x42__BC3fA"
+                                data-tid="a757238c"></div><span class="styles_root__Q2THk styles_listTitle__mDgWK"
+                                data-tid="b012c88c">топ 250</span><span
+                                class="styles_root__Q2THk styles_listPosition__Tg7NC" data-tid="b012c88c">4 место</span>
+                            </a></div>
+                          <div class="film-crew-block styles_filmCrew__tx5Wt" data-tid="f984424">
+                            <div class="styles_actors__wn_C4" data-tid="38ecf27e">
+                              <h3
+                                class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                <a href="/film/3498/cast/" class="styles_link__KtvyW" data-tid="6a319a9e">В главных
+                                  ролях</a>
+                              </h3>
+                              <ul class="styles_list___ufg4">
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/20287/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Элайджа Вуд</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/10779/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Вигго Мортенсен</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/28426/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Шон Эстин</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/8215/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Иэн Маккеллен</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/30875/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Орландо Блум</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/23240/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Доминик Монахэн</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/28463/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Билли Бойд</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/13176/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Энди Серкис</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/32387/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Миранда Отто</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/13143/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Бернард Хилл</a></li>
+                              </ul><a href="/film/3498/cast/"
+                                class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">79 актеров</a>
+                            </div>
+                            <div data-tid="38ecf27e">
+                              <h3
+                                class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                <a href="/film/3498/cast/who_is/voice/" class="styles_link__KtvyW"
+                                  data-tid="6a319a9e">Роли дублировали</a>
+                              </h3>
+                              <ul class="styles_list___ufg4">
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/1041049/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Григорий Анашкин</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/1616606/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Алексей Рязанцев</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/1079073/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Андрей Бархударов</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/318217/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Рогволд Суховерко</a></li>
+                                <li class="styles_root__vKDSE styles_rootInLight__EFZzH" data-tid="2e6eb73e"><a
+                                    href="/name/1646298/" class="styles_link__Act80" itemProp="actor"
+                                    data-tid="d4e8d214">Олег Вирозуб</a></li>
+                              </ul><a href="/film/3498/cast/who_is/voice/"
+                                class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">25 актеров</a>
+                            </div>
+                          </div>
+                          <div class="styles_root__b_uZM styles_awards__stpdy" data-tid="8986781d"><a
+                              href="/film/3498/awards/" class="styles_link__J0S43 styles_linkOscar__ygbHO"
+                              data-tid="cbdd8e90"><img class="image styles_root__DZigd"
+                                src="//st.kp.yandex.net/images/movies/awardOscar.png" data-tid="d813cf42" /><span
+                                class="styles_nominationCount__Lf_e1 styles_nominationCountWinner__9eoZf">11</span></a>
+                            <div class="styles_popover__08Mlf styles_root__SeBrp" data-tid="e30ff91d">
+                              <div class="styles_nominations__I5ywE">
+                                <h3
+                                  class="film-page-section-title styles_rootTitle__2g8Sk styles_title__8qqmP styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                  <a href="/film/3498/awards/" class="styles_link__KtvyW" data-tid="6a319a9e">Оскар<span
+                                      class="styles_moreItem__U5bzS">11</span></a>
+                                </h3>
+                                <ul class="styles_root__GOA2M" data-tid="ae580d90">
+                                  <li><span class="styles_year__jgPZo">2004</span><span
+                                      class="styles_listTitle__8bDJP styles_listTitleWinner__TYTyo">Победитель</span>
+                                  </li>
+                                  <li data-tid="b4b29a33"><span class="styles_year__jgPZo"></span>
+                                    <div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший фильм</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший режиссер</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший адаптированный сценарий</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучшие декорации</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучшие костюмы</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший звук</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший монтаж</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучшие визуальные эффекты</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший грим</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучшая песня</div>
+                                      </div>
+                                      <div class="styles_nomination__kTCOI" data-tid="b4b29a33">
+                                        <div class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                          Лучший оригинальный саундтрек</div>
+                                      </div>
+                                    </div>
+                                  </li>
+                                </ul><a href="/film/3498/awards/" class="styles_allAwardsLink__6vgYm"
+                                  data-tid="935823d">Все награды</a>
+                              </div>
+                              <div class="styles_mainAward__Riz_k"><a href="/film/3498/awards/"
+                                  class="styles_link__J0S43 styles_linkOscar__ygbHO" data-tid="cbdd8e90"><img
+                                    class="image styles_root__DZigd"
+                                    src="//st.kp.yandex.net/images/movies/awardOscar.png" data-tid="d813cf42" /><span
+                                    class="styles_nominationCount__Lf_e1 styles_nominationCountWinner__9eoZf">11</span></a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e" data-tid="893da4ad">
+                        <div class="styles_sequelsPrequels__6Inq0" data-tid="326c794f">
+                          <h3
+                            class="film-page-section-title styles_rootTitle__2g8Sk styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                            <a href="/film/3498/other/" class="styles_link__KtvyW" data-tid="6a319a9e">Сиквелы и
+                              приквелы<span class="styles_moreItem__U5bzS">5</span></a>
+                          </h3>
+                          <div
+                            class="styles_carousel__jP9eI styles_carousel__EVM2s styles_carouselWithPermanentButtons__EW5aQ"
+                            data-tid="36b81cbf">
+                            <div class="styles_scrollBar__NTulg">
+                              <div class="styles_itemsContainer__tPx8D styles_itemsContainer__50oSx">
+                                <div
+                                  class="styles_carouselItem__4Q2kR styles_poster__w55sL styles_posterW100__tnfY9 styles_root__H9wyL styles_rootInLight__tvUQc"
+                                  data-tid="67feb64f">
+                                  <div class="styles_posterWrapper__mGsxF"><a href="/film/328/"
+                                      class="styles_posterLink__Xjqyr" data-tid="d4e8d214"><img
+                                        src="//avatars.mds.yandex.net/get-kinopoisk-image/6201401/a2d5bcae-a1a9-442f-8195-f5373a5ba77f/100x150"
+                                        srcSet="//avatars.mds.yandex.net/get-kinopoisk-image/6201401/a2d5bcae-a1a9-442f-8195-f5373a5ba77f/100x150 1x, //avatars.mds.yandex.net/get-kinopoisk-image/6201401/a2d5bcae-a1a9-442f-8195-f5373a5ba77f/200x300 2x"
+                                        class="styles_poster__OaXTW styles_posterH150__Dc3jv" loading="lazy"
+                                        alt="Властелин колец: Братство Кольца" /></a>
+                                    <div class="styles_overlaySlot__w5RKJ">
+                                      <div
+                                        class="styles_ratingPosterNameplate__inf1V styles_root___s7Tg styles_rootMd__ZvdRj styles_rootPositive__PIwO2"
+                                        data-tid="d5cca7fd">8.6</div><span class="styles_nameplate___D4NG"
+                                        data-tid="e51e848f"></span>
+                                    </div>
+                                  </div><a href="/film/328/" class="styles_captions__9Azea" data-tid="d4e8d214"><span
+                                      class="styles_title__5zsyx styles_titleRedesign__2M5hT"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393"><span>Властелин колец: Братство
+                                          Кольца</span></span></span><span class="styles_subtitle__uUTJR"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:1;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393">2001, фэнтези</span></span></a>
+                                </div>
+                                <div
+                                  class="styles_carouselItem__4Q2kR styles_poster__w55sL styles_posterW100__tnfY9 styles_root__H9wyL styles_rootInLight__tvUQc"
+                                  data-tid="67feb64f">
+                                  <div class="styles_posterWrapper__mGsxF"><a href="/film/312/"
+                                      class="styles_posterLink__Xjqyr" data-tid="d4e8d214"><img
+                                        src="//avatars.mds.yandex.net/get-kinopoisk-image/1704946/5f05fb11-3a26-4ccc-bc6e-8f3707fc72d8/100x150"
+                                        srcSet="//avatars.mds.yandex.net/get-kinopoisk-image/1704946/5f05fb11-3a26-4ccc-bc6e-8f3707fc72d8/100x150 1x, //avatars.mds.yandex.net/get-kinopoisk-image/1704946/5f05fb11-3a26-4ccc-bc6e-8f3707fc72d8/200x300 2x"
+                                        class="styles_poster__OaXTW styles_posterH150__Dc3jv" loading="lazy"
+                                        alt="Властелин колец: Две крепости" /></a>
+                                    <div class="styles_overlaySlot__w5RKJ">
+                                      <div
+                                        class="styles_ratingPosterNameplate__inf1V styles_root___s7Tg styles_rootMd__ZvdRj styles_rootPositive__PIwO2"
+                                        data-tid="d5cca7fd">8.6</div><span class="styles_nameplate___D4NG"
+                                        data-tid="e51e848f"></span>
+                                    </div>
+                                  </div><a href="/film/312/" class="styles_captions__9Azea" data-tid="d4e8d214"><span
+                                      class="styles_title__5zsyx styles_titleRedesign__2M5hT"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393"><span>Властелин колец: Две
+                                          крепости</span></span></span><span class="styles_subtitle__uUTJR"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:1;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393">2002, фэнтези</span></span></a>
+                                </div>
+                                <div
+                                  class="styles_carouselItem__4Q2kR styles_poster__w55sL styles_posterW100__tnfY9 styles_root__H9wyL styles_rootInLight__tvUQc"
+                                  data-tid="67feb64f">
+                                  <div class="styles_posterWrapper__mGsxF"><a href="/film/278522/"
+                                      class="styles_posterLink__Xjqyr" data-tid="d4e8d214"><img
+                                        src="//avatars.mds.yandex.net/get-ott/2439731/2a0000017eb9eafe3148a293e6c2e42049fb/100x150"
+                                        srcSet="//avatars.mds.yandex.net/get-ott/2439731/2a0000017eb9eafe3148a293e6c2e42049fb/100x150 1x, //avatars.mds.yandex.net/get-ott/2439731/2a0000017eb9eafe3148a293e6c2e42049fb/200x300 2x"
+                                        class="styles_poster__OaXTW styles_posterH150__Dc3jv" loading="lazy"
+                                        alt="Хоббит: Нежданное путешествие" /></a>
+                                    <div class="styles_overlaySlot__w5RKJ">
+                                      <div
+                                        class="styles_ratingPosterNameplate__inf1V styles_root___s7Tg styles_rootMd__ZvdRj styles_rootPositive__PIwO2"
+                                        data-tid="d5cca7fd">8.1</div><span class="styles_nameplate___D4NG"
+                                        data-tid="e51e848f"><a class="styles_wrapper__qzCsi"
+                                          href="/film/278522/watch/?from_block=kp-button-sequels-prequels">
+                                          <div class="styles_root__9r0jv styles_rootMd__k3_v9" data-tid="c20084be">
+                                          </div>
+                                        </a></span>
+                                    </div>
+                                  </div><a href="/film/278522/" class="styles_captions__9Azea" data-tid="d4e8d214"><span
+                                      class="styles_title__5zsyx styles_titleRedesign__2M5hT"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393"><span>Хоббит: Нежданное
+                                          путешествие</span></span></span><span class="styles_subtitle__uUTJR"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:1;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393">2012, фэнтези</span></span></a>
+                                </div>
+                                <div
+                                  class="styles_carouselItem__4Q2kR styles_poster__w55sL styles_posterW100__tnfY9 styles_root__H9wyL styles_rootInLight__tvUQc"
+                                  data-tid="67feb64f">
+                                  <div class="styles_posterWrapper__mGsxF"><a href="/film/408876/"
+                                      class="styles_posterLink__Xjqyr" data-tid="d4e8d214"><img
+                                        src="//avatars.mds.yandex.net/get-ott/223007/2a0000017eb9cec40106cb42c2fc18a52a23/100x150"
+                                        srcSet="//avatars.mds.yandex.net/get-ott/223007/2a0000017eb9cec40106cb42c2fc18a52a23/100x150 1x, //avatars.mds.yandex.net/get-ott/223007/2a0000017eb9cec40106cb42c2fc18a52a23/200x300 2x"
+                                        class="styles_poster__OaXTW styles_posterH150__Dc3jv" loading="lazy"
+                                        alt="Хоббит: Пустошь Смауга" /></a>
+                                    <div class="styles_overlaySlot__w5RKJ">
+                                      <div
+                                        class="styles_ratingPosterNameplate__inf1V styles_root___s7Tg styles_rootMd__ZvdRj styles_rootPositive__PIwO2"
+                                        data-tid="d5cca7fd">8.0</div><span class="styles_nameplate___D4NG"
+                                        data-tid="e51e848f"><a class="styles_wrapper__qzCsi"
+                                          href="/film/408876/watch/?from_block=kp-button-sequels-prequels">
+                                          <div class="styles_root__9r0jv styles_rootMd__k3_v9" data-tid="c20084be">
+                                          </div>
+                                        </a></span>
+                                    </div>
+                                  </div><a href="/film/408876/" class="styles_captions__9Azea" data-tid="d4e8d214"><span
+                                      class="styles_title__5zsyx styles_titleRedesign__2M5hT"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393"><span>Хоббит: Пустошь Смауга</span></span></span><span
+                                      class="styles_subtitle__uUTJR"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:1;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393">2013, фэнтези</span></span></a>
+                                </div>
+                                <div
+                                  class="styles_carouselItem__4Q2kR styles_poster__w55sL styles_posterW100__tnfY9 styles_root__H9wyL styles_rootInLight__tvUQc"
+                                  data-tid="67feb64f">
+                                  <div class="styles_posterWrapper__mGsxF"><a href="/film/694633/"
+                                      class="styles_posterLink__Xjqyr" data-tid="d4e8d214"><img
+                                        src="//avatars.mds.yandex.net/get-ott/2439731/2a0000017eb9cd16f623b34966755024e4d3/100x150"
+                                        srcSet="//avatars.mds.yandex.net/get-ott/2439731/2a0000017eb9cd16f623b34966755024e4d3/100x150 1x, //avatars.mds.yandex.net/get-ott/2439731/2a0000017eb9cd16f623b34966755024e4d3/200x300 2x"
+                                        class="styles_poster__OaXTW styles_posterH150__Dc3jv" loading="lazy"
+                                        alt="Хоббит: Битва пяти воинств" /></a>
+                                    <div class="styles_overlaySlot__w5RKJ">
+                                      <div
+                                        class="styles_ratingPosterNameplate__inf1V styles_root___s7Tg styles_rootMd__ZvdRj styles_rootPositive__PIwO2"
+                                        data-tid="d5cca7fd">7.8</div><span class="styles_nameplate___D4NG"
+                                        data-tid="e51e848f"><a class="styles_wrapper__qzCsi"
+                                          href="/film/694633/watch/?from_block=kp-button-sequels-prequels">
+                                          <div class="styles_root__9r0jv styles_rootMd__k3_v9" data-tid="c20084be">
+                                          </div>
+                                        </a></span>
+                                    </div>
+                                  </div><a href="/film/694633/" class="styles_captions__9Azea" data-tid="d4e8d214"><span
+                                      class="styles_title__5zsyx styles_titleRedesign__2M5hT"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393"><span>Хоббит: Битва пяти воинств</span></span></span><span
+                                      class="styles_subtitle__uUTJR"><span
+                                        style="display:-webkit-box;overflow:hidden;-webkit-line-clamp:1;-webkit-box-orient:vertical"
+                                        data-tid="ecca3393">2014, фэнтези</span></span></a>
+                                </div>
+                              </div>
+                            </div><button type="button"
+                              class="styles_carouselButtonLeft__f5EYJ styles_toLeftButton__JGwPS styles_button__p8WQs styles_root__JJ9PF"
+                              data-tid="6fd705ff"><span
+                                class="styles_iconLeftDir__J7R9r styles_icon__cdKpZ"></span></button><button
+                              type="button"
+                              class="styles_carouselButtonRight___DIwA styles_toRightButton__P7qf8 styles_button__p8WQs styles_root__JJ9PF"
+                              data-tid="6fd705ff"><span
+                                class="styles_iconRightDir__KZiDL styles_icon__cdKpZ"></span></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="styles_root__2kxYy styles_topLine__xigow styles_topLineUserNote__hxKqF"
+                      data-tid="914bd01c">
+                      <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P" data-tid="893da4ad">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="styles_root__B1q5W styles_rootLight___QD_Q styles_root__axj8R" data-tid="21855542">
+          <div class="styles_root__UtArQ" data-tid="3716659c">
+            <div class="styles_root__2kxYy" data-tid="914bd01c">
+              <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e styles_column__5dEFP"
+                data-tid="893da4ad">
+                <div class="styles_main__vjk2Q styles_additionalInformationSection__GmCD7">
+                  <div class="styles_root__KtmEB" data-tid="37b61dba">
+                    <div data-tid="e0411e82">
+                      <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                    </div>
+                  </div><span id="film-details-info" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div data-tid="e0411e82">
+                      <div class="film-details-block styles_root__FF738" data-tid="71e757c">
+                        <div class="styles_tabsSection__aKq4_">
+                          <div class="styles_root__rVp2r" data-tid="3855337e">
+                            <div class="styles_itemsSpoiler__ROHvQ styles_ssr__ytsd7" data-tid="de3d23c9">
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_itemActive__Nd9PE styles_item__CGufh"
+                                  data-tid="b92ae11f"><span
+                                    class="styles_itemActive__S4PQM styles_item__wPOY6">Обзор</span></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/awards/">Награды</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/dates/">Премьеры</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/stills/">Изображения</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/video/">Трейлеры</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/studio/">Студии</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/other/">Связи</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><a
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                    href="/film/3498/reviews/">Рецензии</a></div>
+                              </div>
+                              <div class="styles_itemContainerWrap__7O8FL" data-tid="7232869f">
+                                <div class="styles_root__WrVXN styles_item__CGufh" data-tid="b92ae11f"><span
+                                    class="styles_itemDefault__nPthf styles_item__wPOY6">Еще...</span>
+                                  <div class="styles_dropDownContainer__g27mF">
+                                    <div class="styles_dropDown__QqORT styles_dropDown__wMbnB">
+                                      <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                        data-tid="b92ae11f"><a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                          href="/film/3498/sites/">Сайты</a></div>
+                                      <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                        data-tid="b92ae11f"><a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                          href="/film/3498/tracks/">Саундтреки</a></div>
+                                      <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                        data-tid="b92ae11f"><a class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                          href="/film/3498/subscribe/">Подписка на обновления</a></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="styles_synopsisSection__nJoAj">
+                          <div class="styles_filmSynopsis__Cu2Oz" data-tid="7f916518">
+                            <p class="styles_paragraph__wEGPz" data-tid="bbb11238">Повелитель сил тьмы Саурон направляет
+                              свою бесчисленную армию под стены Минас-Тирита, крепости Последней Надежды. Он предвкушает
+                              близкую победу, но именно это мешает ему заметить две крохотные фигурки — хоббитов,
+                              приближающихся к Роковой Горе, где им предстоит уничтожить Кольцо Всевластья.</p>
+                          </div>
+                        </div>
+                        <div class="styles_filmRatingSection___Sph9">
+                          <div class="" data-tid="af0b971c">
+                            <h3
+                              class="film-page-section-title styles_rootTitle__2g8Sk styles_title__vtVG_ styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                              Рейтинг фильма</h3>
+                            <div class="styles_content__QYDgA">
+                              <div class="styles_formContainer__yBeUw">
+                                <form class="styles_form__2pcvP styles_form__Bw8gI film-rate-form" data-tid="ad886728">
+                                  <label class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="1" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="1" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="2" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="2" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="3" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="3" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="4" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="4" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="5" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="5" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="6" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="6" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="7" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="7" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="8" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="8" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                    data-value="9" data-tid="5d365105"><input type="radio" class="styles_input__SRM0B"
+                                      name="star" value="9" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span><span style="width:65%"
+                                        class="styles_partialIcon__PpsMw styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label><label
+                                    class="styles_radio__IqZef styles_root__FBsKv" data-value="10"
+                                    data-tid="5d365105"><input type="radio" class="styles_input__SRM0B" name="star"
+                                      value="10" /><span class="styles_iconContainer__9nPOy"><span
+                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                        data-tid="5a15c5d7"></span></span></label>
+                                </form>
+                                <div class="styles_buttons__dSk8l"><button
+                                    class="styles_scrollToAddReviewButton__GAfqB styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                      class="styles_tooltip__BZYE_" data-tid="d43912a6">Написать рецензию</span>Написать
+                                    рецензию</button></div>
+                              </div>
+                              <div class="styles_ratingContainer__RhJ96">
+                                <div>
+                                  <div
+                                    class="film-rating styles_root__7rVf_ styles_rootLSize__X4aDt styles_rootInLight__4w53g"
+                                    data-tid="71598065">
+                                    <div class="styles_ratingValue__UO6Zl styles_rootLSize__X4aDt">
+                                      <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><a
+                                            class="film-rating-value styles_rootKpTop__pByhB styles_rootLink__mm0kW"
+                                            href="/film/3498/votes/">8.6</a></span><a
+                                          class="styles_topListPositionBadge__j5rPp styles_root__jYb9p styles_rootLegacy__Ft6DV"
+                                          href="/lists/movies/top250/" data-tid="45e77845">
+                                          <div class="styles_root__ixhBE styles_icon__fFV9t styles_size36x37__A0Apc"
+                                            data-tid="a757238c"></div>
+                                          <div>
+                                            <div class="styles_content__yUcEK"><span
+                                                class="styles_root__Q2THk styles_title__b0LlO" data-tid="b012c88c">топ
+                                                250</span><span class="styles_root__Q2THk styles_position__pm10U"
+                                                data-tid="b012c88c">#
+                                                <!-- -->4
+                                              </span></div><span class="styles_root__Q2THk styles_subtitle__9DKd0"
+                                              data-tid="b012c88c">Кинопоиск</span>
+                                          </div>
+                                        </a></div>
+                                      <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">516 783
+                                          оценки</span><span class="styles_count__iOIwD">
+                                          <div class="film-sub-rating" data-tid="3d4f49c8"><span
+                                              class="styles_valueSection__0Tcsy">IMDb
+                                              <!-- -->:
+                                              <!-- -->9.00
+                                            </span><span class="styles_count__89cAz">1 774 626 оценок</span></div>
+                                        </span></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="styles_criticRatingSection__rlcU9">
+                          <div class="styles_root__i6At7" data-tid="f914d65f">
+                            <div class="styles_ratingBar__W5otN" data-tid="9f39fdf1">
+                              <h3
+                                class="film-page-section-title styles_rootTitle__2g8Sk styles_header__I8hG1 styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                                Рейтинг кинокритиков в мире</h3>
+                              <div class="styles_filmRatingBar__Mks7X styles_ratingBar__NSzsB styles_withValue__PEUCo"
+                                data-tid="d610b8e8">
+                                <div class="styles_greenBar__NAQmT styles_bar__7hk5H" style="flex:93;min-width:30px">256
+                                </div>
+                                <div class="styles_redBar__b_rlR styles_bar__7hk5H" style="flex:7;min-width:30px">18
+                                </div>
+                              </div>
+                              <div class="styles_actionBar__6SGOg">
+                                <div class="styles_actionBarLeft__rwQsY">
+                                  <div
+                                    class="film-rating styles_root__7rVf_ styles_rootSSize__sQJqB styles_rootInLight__4w53g"
+                                    data-tid="71598065">
+                                    <div class="styles_ratingValue__UO6Zl styles_rootSSize__sQJqB">
+                                      <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><span
+                                            class="film-rating-value styles_rootPositive__mLBSO">93%</span></span></div>
+                                      <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">274
+                                          оценки<span class="styles_starValue__tchEE">8.7</span></span></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="styles_ratingBar__W5otN" data-tid="9f39fdf1">
+                              <h3
+                                class="film-page-section-title styles_rootTitle__2g8Sk styles_header__I8hG1 styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                                <a href="/film/3498/press/" class="styles_link__KtvyW" data-tid="6a319a9e">В России</a>
+                              </h3>
+                              <div class="styles_filmRatingBar__Mks7X styles_ratingBar__NSzsB styles_withValue__PEUCo"
+                                data-tid="d610b8e8">
+                                <div class="styles_greenBar__NAQmT styles_bar__7hk5H" style="flex:100;min-width:30px">8
+                                </div>
+                                <div class="styles_redBar__b_rlR styles_bar__7hk5H" style="flex:0"></div>
+                              </div>
+                              <div class="styles_actionBar__6SGOg">
+                                <div class="styles_actionBarLeft__rwQsY">
+                                  <div
+                                    class="film-rating styles_root__7rVf_ styles_rootSSize__sQJqB styles_rootInLight__4w53g"
+                                    data-tid="71598065">
+                                    <div class="styles_ratingValue__UO6Zl styles_rootSSize__sQJqB">
+                                      <div class="styles_valueBlock___nWKb"><span class="styles_value__N2Vzt"><span
+                                            class="film-rating-value styles_rootPositive__mLBSO">100%</span></span>
+                                      </div>
+                                      <div class="styles_countBlock__jxRDI"><span class="styles_count__iOIwD">8
+                                          оценок</span></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div><span id="film-similar_movies" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__AphAt" data-tid="718c3e1"><span
+                        class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_carousel__TDvSy">
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                      </div>
+                    </div>
+                  </div><span id="film-trailers" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__NaGgU" data-tid="388eb013"><span
+                        class="styles_title__DqgWT styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_root__2kxYy" data-tid="914bd01c">
+                        <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7" data-tid="893da4ad">
+                          <div class="" data-tid="2e582843"><span class="styles_preview__ruOp9 styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span
+                              class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span
+                              class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span></div>
+                        </div>
+                        <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7" data-tid="893da4ad">
+                          <div class="" data-tid="2e582843"><span class="styles_preview__ruOp9 styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span
+                              class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span
+                              class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div><span id="film-facts" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__DA3xg" data-tid="f66307a6"><span
+                        class="styles_title__juLbV styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span><span class="styles_trivias__dYVWd styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span></div>
+                  </div><span id="film-media-posts" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__5UEhB" data-tid="bb544b3"><span
+                        class="styles_title__G7P6B styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_carousel__a_hbM">
+                        <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f"><span
+                            class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                          <div class="styles_content__mbyG4"><span class="styles_title__c_Mad styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span class="styles_date__RRcaK styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span></div>
+                        </div>
+                        <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f"><span
+                            class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                          <div class="styles_content__mbyG4"><span class="styles_title__c_Mad styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span class="styles_date__RRcaK styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span></div>
+                        </div>
+                        <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f"><span
+                            class="styles_image__yrRqu styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                          <div class="styles_content__mbyG4"><span class="styles_title__c_Mad styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span><span class="styles_date__RRcaK styles_root__2Vgyb"
+                              data-tid="ad14a6be">‌</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div><span id="today-in-cinema-block" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__AphAt" data-tid="718c3e1"><span
+                        class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_carousel__TDvSy">
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                            class="styles_poster__EfxdH styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardTitle__c0Qni styles_root__2Vgyb" data-tid="ad14a6be">‌</span><span
+                            class="styles_cardSubtitle__eJwHH styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                      </div>
+                    </div>
+                  </div><span id="film-critic-reviews" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__IDbib" data-tid="590d7889"><span
+                        class="styles_title__1_WZz styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_carousel__pAWGW"><span
+                          class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                          data-tid="ad14a6be">‌</span><span
+                          class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                          data-tid="ad14a6be">‌</span><span
+                          class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb" data-tid="ad14a6be">‌</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="user-reviews" class="styles_root__bpW7N" data-tid="7a20dd1e">
+                    <div data-tid="e0411e82"><span id="film-users-reviews" style="height:0" data-tid="32753834"></span>
+                      <div style="min-width:1px" data-tid="517927c6">
+                        <div class="styles_root__rly1E" data-tid="a4f2984f"><span
+                            class="styles_title__4zZWY styles_root__llf0m styles_rootLg__v_8HV styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_button__hH7LK styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_review__qp_BA styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT"></div>
+              <div
+                class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP styles_sidebarSection__q_p1Y"
+                data-tid="893da4ad">
+                <div class="styles_sidebar__mZOfP">
+                  <div class="" data-tid="43d5b8ef">
+                    <div class="" data-tid="e810e001">
+                      <div id="foxadbanner_200_200_film" class="styles_container__XXCpX" data-tid="9501d3f4"></div>
+                    </div>
+                  </div>
+                  <div class="styles_root____5P5" data-tid="14985c6b">
+                    <div class="styles_header__iErfu">
+                      <nav class="styles_nav__gHl7k"><button tabindex="0" type="button"
+                          class="styles_root__5QqzE styles_rootSelected__oVvef" data-tid="1f6a4ca6">Друзья</button>
+                      </nav>
+                      <div class="styles_rating__sV8yH"></div>
+                    </div>
+                    <div class="styles_root__sGbD8" data-tid="c17d21c6"><button tabindex="0" type="button"
+                        class="styles_link__xVM_W">Найдите друзей</button>, зарегистрированных на Кинопоиске, и здесь
+                      появятся оценки, которые ваши друзья поставили этому фильму...</div>
+                  </div><span id="movie-lists-relations" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div class="styles_root__UkkRY" data-tid="d34ff620"><span
+                        class="styles_skeletonTitle__zDdnJ styles_title__zJKfl styles_root__llf0m styles_rootSm__Nt66I styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                        <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span
+                            class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                      <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                        <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span
+                            class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                      <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                        <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span
+                            class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                      <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                        <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span
+                            class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                      <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                        <div class="styles_titleWrapper__Ik_kf"><span class="styles_title__4qO8I styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span
+                            class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                    </div>
+                  </div><span id="soundtrack-section" style="height:0" data-tid="32753834"></span>
+                  <div style="min-width:1px" data-tid="517927c6">
+                    <div data-tid="373566cd"><span
+                        class="styles_skeletonTitle__uDC2G styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                        data-tid="ad14a6be">‌</span>
+                      <div class="styles_skeletonIframe__bRjU0">
+                        <div class="styles_skeletonCoverWrap__HoP_s"><span
+                            class="styles_skeletonPicture__aal6r styles_root__2Vgyb" data-tid="ad14a6be">‌</span></div>
+                        <div class="styles_skeletonContent__sfMYz"><span
+                            class="styles_skeletonAlbumTitle__ZYn6S styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_skeletonSubtitle__wUNb_ styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span
+                            class="styles_skeletonPlayButton___gNe9 styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span><span class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                            data-tid="ad14a6be">‌</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="styles_sticky__S5Rjy" data-tid="5da1a3ef">
+                    <div class="styles_root__TryBS">
+                      <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="styles_footerContainer__Mk60T styles_baseContainer__8XBMw">
+        <footer class="footer styles_rootDark__mtmaQ styles_root__sUtn2" data-tid="995d0553">
+          <section class="styles_root__kcCHj social-icons styles_socialMenu__gLaiH" data-tid="39df70f"><a
+              class="styles_icon__cHky_" href="https://vk.com/kinopoisk" target="_blank" rel="noopener noreferrer"
+              aria-label="presentation" data-tid="2e9b873"><img
+                src="//avatars.mds.yandex.net/get-bunker/118781/0ae3d1ca27d3794204beec7d3810025f8c2b7e87/svg"
+                alt="https://vk.com/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a class="styles_icon__cHky_"
+              href="https://www.facebook.com/kinopoisk" target="_blank" rel="noopener noreferrer"
+              aria-label="presentation" data-tid="2e9b873"><img
+                src="//avatars.mds.yandex.net/get-bunker/56833/0baf23635975a9f1b481833f37653aa2efceb3a1/svg"
+                alt="https://www.facebook.com/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+              class="styles_icon__cHky_" href="https://twitter.com/kinopoiskru" target="_blank"
+              rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                src="//avatars.mds.yandex.net/get-bunker/61205/97123f0bc0c689932a2fb6b62d3ab8ce04d7e936/svg"
+                alt="https://twitter.com/kinopoiskru" loading="lazy" data-tid="9107e4a2" /></a><a
+              class="styles_icon__cHky_" href="https://telegram.me/kinopoisk" target="_blank" rel="noopener noreferrer"
+              aria-label="presentation" data-tid="2e9b873"><img
+                src="//avatars.mds.yandex.net/get-bunker/56833/9f570502e378d5e28a5a173a273fa811c4490a73/svg"
+                alt="https://telegram.me/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+              class="styles_icon__cHky_" href="https://www.instagram.com/kinopoisk/" target="_blank"
+              rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                src="//avatars.mds.yandex.net/get-bunker/50064/c6b1a28b4bf580d4cf96ec7f262aace67a4dde2e/svg"
+                alt="https://www.instagram.com/kinopoisk/" loading="lazy" data-tid="9107e4a2" /></a><a
+              class="styles_icon__cHky_" href="https://www.youtube.com/user/kinopoisk" target="_blank"
+              rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                src="//avatars.mds.yandex.net/get-bunker/128809/65fe1abdd405eb82aec7490588a1ec6745d9ab87/svg"
+                alt="https://www.youtube.com/user/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a></section>
+          <ul class="footer__content-links styles_contentMenu__OgjQP">
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                href="https://yandex.ru/jobs/vacancies/dev/?from=kinopoisk&amp;services=kinopoisk" target="_blank"
+                rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                data-tid="2e9b873">Вакансии</a></li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                href="https://yandex.ru/adv/products/display/kinopoiskmedia" target="_blank" rel="noopener noreferrer"
+                class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Реклама</a></li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a href="/docs/usage/"
+                target="_blank" rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                data-tid="2e9b873">Соглашение</a></li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                href="https://yandex.ru/support/kinopoisk/index.html" target="_blank" rel="noopener noreferrer"
+                class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Справка</a></li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                href="/media/rubric/19/" target="_blank" rel="noopener noreferrer"
+                class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Блог</a></li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                href="https://www.surveygizmo.eu/s3/90259271/" target="_blank" rel="noopener noreferrer"
+                class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Участие в исследованиях</a>
+            </li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                href="https://kinopoisk.userecho.com/" target="_blank" rel="noopener noreferrer"
+                class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Предложения</a></li>
+            <li class="footer__content-item styles_contentMenuItem__yTKp2"><button type="button"
+                class="styles_contentButton__Yfvdh">Служба поддержки</button></li>
+          </ul>
+          <div class="styles_root__a_qyh styles_mobileAppsMenu__E1mGj styles_rootDark__ZR7rh" data-tid="358cef48"><a
+              class="styles_store__JFbwQ"
+              href="https://10267.redirect.appmetrica.yandex.com/mainView?appmetrica_tracking_id=170895231946863928"
+              target="_blank" rel="noopener noreferrer" data-tid="7777859c"><img
+                src="//avatars.mds.yandex.net/get-bunker/50064/9de0796ad18834328b4d4858b524bf8ce6f31f98/svg"
+                alt="Загрузить приложение" loading="lazy" /></a><a class="styles_store__JFbwQ"
+              href="https://redirect.appmetrica.yandex.com/serve/603240792315703184" target="_blank"
+              rel="noopener noreferrer" data-tid="7777859c"><img
+                src="//avatars.mds.yandex.net/get-bunker/994123/d4d889eb60c34ed8ca7d3c0fe965b8327e229fcf/svg"
+                alt="Загрузить приложение" loading="lazy" /></a><a class="styles_store__JFbwQ"
+              href="https://redirect.appmetrica.yandex.com/serve/1179706852124993595" target="_blank"
+              rel="noopener noreferrer" data-tid="7777859c"><img
+                src="//avatars.mds.yandex.net/get-bunker/128809/1b6561563c22de1014279a528719f4f7d9360296/svg"
+                alt="Загрузить приложение" loading="lazy" /></a></div>
+          <section class="styles_bottomSection__qx7AY footer__bottom">
+            <div class="styles_bottomSectionInfo__0XSte footer__bottom-info">
+              <div><span class="styles_year__tYQPp footer__bottom-info-year">© 2003 —
+                  <!-- -->2022
+                  <!-- -->,
+                </span><a class="styles_bottomSectionInfoLink__Z8Szl footer__bottom-info-link"
+                  href="https://www.kinopoisk.ru/" target="_blank" rel="noopener noreferrer"
+                  data-tid="2e9b873">Кинопоиск</a><span class="styles_age__sKz6S footer__bottom-info-age">18
+                  <!-- -->+
+                </span></div>
+              <div class="styles_infoName__8KP42">Yandex Service AG</div>
+            </div>
+            <ul class="styles_bottomSectionMenu__kJDDt footer__bottom-links">
+              <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                  href="https://tv.yandex.ru" target="_blank" rel="noopener noreferrer"
+                  class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Телепрограмма</a>
+              </li>
+              <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                  href="https://music.yandex.ru" target="_blank" rel="noopener noreferrer"
+                  class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Музыка</a></li>
+              <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                  href="https://afisha.yandex.ru" target="_blank" rel="noopener noreferrer"
+                  class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link" data-tid="2e9b873">Афиша</a></li>
+            </ul>
+            <div class="styles_companySection__2U1gC footer__bottom-company"><span
+                class="styles_companySectionTitle__UUuEV footer__bottom-company-name">Проект компании</span><a
+                class="styles_companyLogo__gDzdb footer__bottom-company-logo" href="https://yandex.ru" target="_blank"
+                rel="noopener noreferrer" data-tid="2e9b873">Яндекс</a></div>
+          </section>
+        </footer>
+      </div><button class="styles_root__p7NQg" type="button" data-tid="ed9136fe"><span
+          class="styles_iconWrapper__VsEKC"><span class="styles_icon__6tiLC"></span></span></button>
+      <div class="styles_root__yEgpj styles_notifyTooltip__B_TG7" data-tid="2f7f876f"></div>
+    </div>
+    <div class="styles_progress__ZoYH9" hidden="" data-tid="c2959803">
+      <div class="styles_progressBar__p3Spc"></div>
+    </div>
+  </div>
+</body>
+
+</html>
+    """
+
+    private val movie32898Html: String = """
+        <!DOCTYPE html>
+        <html>
+
+        <head>
+            <meta name="viewport" content="width=device-width" />
+            <meta charSet="utf-8" />
+            <title data-tid="57f72b5">Достучаться до небес — Кинопоиск</title>
+            <meta name="theme-color" content="#1f1f1f" data-tid="57f72b5" />
+            <meta name="apple-mobile-web-app-capable" content="yes" data-tid="57f72b5" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="black" data-tid="57f72b5" />
+            <meta name="apple-mobile-web-app-title" content="Кинопоиск" data-tid="57f72b5" />
+            <meta name="apple-itunes-app" content="app-id=477718890, ct=kp-web, pt=214944, mt=8" data-tid="57f72b5" />
+            <meta name="application-name" content="Кинопоиск" data-tid="57f72b5" />
+            <meta property="fb:app_id" content="121953784483000" data-tid="57f72b5" />
+            <meta property="fb:pages" content="152308956519" data-tid="57f72b5" />
+            <meta property="og:site_name" content="Кинопоиск" data-tid="57f72b5" />
+            <meta name="msapplication-TileColor" content="#000" data-tid="57f72b5" />
+            <meta name="msapplication-TileImage"
+                content="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+                data-tid="57f72b5" />
+            <meta name="msapplication-config" content="//st.kp.yandex.net/public/xml/ieconfig.xml" data-tid="57f72b5" />
+            <link rel="mask-icon"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-16.svg"
+                data-tid="57f72b5" />
+            <link rel="apple-touch-icon-precomposed"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/apple-favicon-152.png"
+                data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-57.png"
+                sizes="57x57" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-76.png"
+                sizes="76x76" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-96.png"
+                sizes="96x96" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-120.png"
+                sizes="120x120" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-128.png"
+                sizes="128x128" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-144.png"
+                sizes="144x144" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-152.png"
+                sizes="152x152" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-180.png"
+                sizes="180x180" data-tid="57f72b5" />
+            <link rel="icon" type="image/png"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-196.png"
+                sizes="196x196" data-tid="57f72b5" />
+            <link rel="icon"
+                href="https://yastatic.net/s3/kinopoisk-frontend/common-static/img/projector-favicon/favicon-64.ico"
+                data-tid="57f72b5" />
+            <link rel="search" type="application/opensearchdescription+xml" title="Поиск на kinopoisk.ru" href="/kp_search.xml"
+                data-tid="57f72b5" />
+            <meta name="description"
+                content="Судьба сводит двух незнакомцев в больнице, где они получают смертельные диагнозы. Но парни не хотят мириться с судьбой и тихо заканчивать свои дни в больничной палате - угнав машину с миллионом немецких марок в багажнике, они сбегают из больницы. "
+                data-tid="57f72b5" />
+            <meta name="keywords"
+                content="Достучаться до небес — Кинопоиск Knockin&#x27; on Heaven&#x27;s Door фильм сериал кино обои фотографии сеансы афиша обзор комментарии рейтинг факты отзывы кадры новости сайт"
+                data-tid="57f72b5" />
+            <link type="application/rss+xml" rel="alternate" title="RSS" href="/news.rss" data-tid="57f72b5" />
+            <link rel="canonical" href="https://www.kinopoisk.ru/film/32898/" data-tid="57f72b5" />
+            <meta property="og:title" content="«Достучаться до небес» (Knockin&#x27; on Heaven&#x27;s Door, 1997)"
+                data-tid="57f72b5" />
+            <meta property="twitter:title" content="«Достучаться до небес» (Knockin&#x27; on Heaven&#x27;s Door, 1997)"
+                data-tid="57f72b5" />
+            <meta property="og:description"
+                content="Судьба сводит двух незнакомцев в больнице, где они получают смертельные диагнозы. Но парни не хотят мириться с судьбой и тихо заканчивать свои дни в больничной палате - угнав машину с миллионом немецких марок в багажнике, они сбегают из больницы. "
+                data-tid="57f72b5" />
+            <meta property="twitter:description"
+                content="Судьба сводит двух незнакомцев в больнице, где они получают смертельные диагнозы. Но парни не хотят мириться с судьбой и тихо заканчивать свои дни в больничной палате - угнав машину с миллионом немецких марок в багажнике, они сбегают из больницы. "
+                data-tid="57f72b5" />
+            <meta property="og:url" content="https://www.kinopoisk.ru/film/32898/" data-tid="57f72b5" />
+            <meta property="og:image"
+                content="https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/8767f354-1590-41f2-940c-5b0a6ca010ec/1200x630"
+                data-tid="57f72b5" />
+            <meta property="vk:image"
+                content="https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/8767f354-1590-41f2-940c-5b0a6ca010ec/1200x630"
+                data-tid="57f72b5" />
+            <meta name="twitter:image"
+                content="https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/8767f354-1590-41f2-940c-5b0a6ca010ec/1200x630"
+                data-tid="57f72b5" />
+            <meta property="og:image:width" content="1200" data-tid="57f72b5" />
+            <meta property="og:image:height" content="630" data-tid="57f72b5" />
+            <meta name="twitter:site" content="kinopoiskru" data-tid="57f72b5" />
+            <meta name="twitter:card" content="summary_large_image" data-tid="57f72b5" />
+            <meta property="og:type" content="website" data-tid="57f72b5" />
+            <link rel="alternate" href="android-app://ru.kinopoisk/https/www.kinopoisk.ru/film/32898/" data-tid="57f72b5" />
+            <link rel="alternate" href="ios-app://EK7Z26L6D4.ru.kinopoisk/https/www.kinopoisk.ru/film/32898/"
+                data-tid="57f72b5" />
+            <meta name="next-head-count" content="47" />
+            <link rel="preload" as="script" href="https://yandex.ru/ads/system/context.js" crossorigin="anonymous"
+                data-tid="db024bc5" />
+            <link rel="manifest"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/pwa-manifests/production.json"
+                crossorigin="anonymous" data-tid="74a9c6bc" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c94162dd6edb9809.css"
+                crossorigin="anonymous" data-n-g="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/9bb2cddd1d03953c.css"
+                crossorigin="anonymous" data-n-p="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/1457bfb89d2cba8a.css"
+                crossorigin="anonymous" data-n-p="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/080900a337a90d28.css"
+                crossorigin="anonymous" data-n-p="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/c2a3191c03d6c7da.css"
+                crossorigin="anonymous" data-n-p="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/f0c1fa89f04171cd.css"
+                crossorigin="anonymous" data-n-p="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/87576cb630dc2062.css"
+                crossorigin="anonymous" data-n-p="" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/d2ddd25e213814f0.css"
+                crossorigin="anonymous" />
+            <link rel="preload"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+                as="style" crossorigin="anonymous" />
+            <link rel="stylesheet"
+                href="https://yastatic.net/s3/kinopoisk-frontend/frontend-www/release/_next/static/css/3f399ce3836c5e20.css"
+                crossorigin="anonymous" /><noscript data-n-css=""></noscript>
+        </head>
+
+        <body class="body" data-tid="f8463833">
+            <div id="__next" data-reactroot="">
+                <div class="styles_root__hSE6c styles_promoPopover__pKHxa" data-tid="d504712e"><button type="button"
+                        class="styles_closeButton__LEexp"><span class="styles_closeButtonIcon__w69HE"></span></button></div>
+                <div class="styles_root__vsmL9" data-tid="2781b874">
+                    <div class="styles_root__BJH2_ styles_headerContainer__sFBK8" data-tid="1d1e4a8c">
+                        <header class="styles_root__jlo2L styles_header__0LyFn styles_rootDark__nQDyF" data-tid="63b05890">
+                            <div class="header-navigation styles_navigation__S8raz styles_navigationDark__x0vdW">
+                                <div class="styles_logoContainer__G47EP">
+                                    <div class="styles_root__jfc_s" data-tid="911e2f4d">
+                                        <div class=""><button class="styles_root__coHaQ styles_burger__HcbjK" type="button"
+                                                data-tid="8ed90190"><span class="styles_icon__J3wes"
+                                                    style="color:#999999"></span></button>
+                                            <div class="styles_dropdown__MqT__ styles_dropdownOpen__mTn_V styles_dropdownDefault__KwZHT"
+                                                data-tid="585eb7c0">
+                                                <div
+                                                    class="styles_dropdownMenu__bouwC styles_dropdownMenu__c7FZ4 styles_dropdownMenuDark__NzGxR">
+                                                    <div class="styles_navigationMenu__c_jLJ styles_root__RBtQR"
+                                                        data-tid="e500879d"><a href="/"
+                                                            class="styles_root__7mPJN styles_darkThemeItem__E_aGY"
+                                                            data-tid="de7c6530"><img loading="lazy" class="styles_icon__PXEHs"
+                                                                src="https://avatars.mds.yandex.net/get-bunker/128809/4d6f5bd4e839b166859243f82e9fdeb3bc910931/svg"
+                                                                data-tid="b35288c1" />Главная</a><a
+                                                            href="https://hd.kinopoisk.ru/"
+                                                            class="styles_root__7mPJN styles_darkThemeItem__E_aGY"
+                                                            data-tid="de7c6530"><img loading="lazy" class="styles_icon__PXEHs"
+                                                                src="https://avatars.mds.yandex.net/get-bunker/61205/478c72b68bc4ac507483b2676994bbc1df5f05be/svg"
+                                                                data-tid="b35288c1" />Онлайн-кинотеатр</a><a
+                                                            href="/lists/categories/movies/1/"
+                                                            class="styles_root__7mPJN styles_darkThemeItem__E_aGY"
+                                                            data-tid="de7c6530"><img loading="lazy" class="styles_icon__PXEHs"
+                                                                src="https://avatars.mds.yandex.net/get-bunker/50064/ab24b8099cb4ca11c08b0def91dc5c1d4fd78649/svg"
+                                                                data-tid="b35288c1" />Фильмы</a><a
+                                                            href="/lists/categories/movies/3/"
+                                                            class="styles_root__7mPJN styles_darkThemeItem__E_aGY"
+                                                            data-tid="de7c6530"><img loading="lazy" class="styles_icon__PXEHs"
+                                                                src="https://avatars.mds.yandex.net/get-bunker/61205/9daeaf410906b5794685b7b5bb25dfd2c647fccf/svg"
+                                                                data-tid="b35288c1" />Сериалы</a><a href="/afisha/new/"
+                                                            class="styles_root__7mPJN styles_darkThemeItem__E_aGY"
+                                                            data-tid="de7c6530"><img loading="lazy" class="styles_icon__PXEHs"
+                                                                src="https://avatars.mds.yandex.net/get-bunker/118781/ae7fbfc1773a6bbd61ee0154628c6fe14bf6959e/svg"
+                                                                data-tid="b35288c1" />Билеты в кино</a><a href="/media/"
+                                                            class="styles_root__7mPJN styles_darkThemeItem__E_aGY"
+                                                            data-tid="de7c6530"><img loading="lazy" class="styles_icon__PXEHs"
+                                                                src="https://avatars.mds.yandex.net/get-bunker/118781/960a47a181b1b0a28ceb45a075e64c1a9378442c/svg"
+                                                                data-tid="b35288c1" />Медиа</a></div>
+                                                </div>
+                                            </div>
+                                        </div><a href="/" class="styles_root__dYidr styles_logo___bcop" data-tid="d4e8d214"><img
+                                                class="styles_img__3hWmL kinopoisk-header-logo__img" alt="Кинопоиск"
+                                                src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTY0IiBoZWlnaHQ9IjM2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNTguODU5IDE4YzAtNS44ODkgMi45NTQtMTAuNiA4LjI4MS0xMC42IDUuMzI4IDAgOC4yODEgNC43MTEgOC4yODEgMTAuNiAwIDUuODktMi45NTQgMTAuNi04LjI4IDEwLjYtNS4zMjggMC04LjI4Mi00LjcxLTguMjgyLTEwLjZabTguMjgxIDcuNjZjMi4wNzIgMCAyLjk1NC0zLjUzNCAyLjk1NC03LjY1MiAwLTQuMTItLjg4OS03LjY1Mi0yLjk1NC03LjY1Mi0yLjA2NSAwLTIuOTU0IDMuNTMzLTIuOTU0IDcuNjUyLS4wMDcgNC4xMTguODgyIDcuNjUyIDIuOTU0IDcuNjUyWk0zLjg0MyA3Ljd2NS41OTZoLjI5NEw3Ljk4IDcuN2g1LjMybC03LjA5OCA2LjQ3NC4yOTQuMjkzTDE5LjUxIDcuNjkzdjQuNzExTDcuOTczIDE2LjUyM3YuMjkybDExLjUzNy0xLjAyOHY0LjQxOUw3Ljk3MyAxOS4xNzh2LjI5M2wxMS41MzcgNC4xMTh2NC43MTJMNi40OTYgMjEuNTI2bC0uMjk0LjI5MyA3LjA5OCA2LjQ3NEg3Ljk4bC0zLjg0My01LjU5NmgtLjI5NHY1LjU5NkgwVjcuNjg2aDMuODQzVjcuN1ptMTkuMjMgMEgyOC4xbC0uMjk0IDEyLjM2M2guMjk0TDM0LjAxNSA3LjdoNC40Mzh2MjAuNjA4aC01LjAyNmwuMjk0LTEyLjM2NGgtLjI5NEwyNy41MSAyOC4zMDloLTQuNDM4VjcuN1ptMjMuOTU1IDBoLTUuMDI2djIwLjYwOGg1LjAyNnYtOS4xM2g0LjEzN3Y5LjEzaDUuMDI2VjcuN2gtNS4wMjZ2Ny45NTJoLTQuMTM3VjcuN1ptNDUuMjUgMGgtMTQuMTl2MjAuNjA4aDUuMDI3VjExLjIzM2g0LjEzN3YxNy4wNzVoNS4wMjZWNy43Wm0yLjY2IDEwLjNjMC01Ljg4OSAyLjk1NC0xMC42IDguMjgyLTEwLjYgNS4zMiAwIDguMjgxIDQuNzExIDguMjgxIDEwLjYgMCA1Ljg5LTIuOTU0IDEwLjYtOC4yODEgMTAuNi01LjMyIDAtOC4yODItNC43MS04LjI4Mi0xMC42Wm04LjI4MiA3LjY2YzIuMDcyIDAgMi45NTQtMy41MzQgMi45NTQtNy42NTIgMC00LjEyLS44ODktNy42NTItMi45NTQtNy42NTItMi4wNzIgMC0yLjk1NCAzLjUzMy0yLjk1NCA3LjY1MiAwIDQuMTE4Ljg4MiA3LjY1MiAyLjk1NCA3LjY1MlpNMTE5LjE4NyA3LjdoLTUuMDI2djIwLjYwOGg0LjQzOGw1LjkxNi0xMi4zNjRoLjI5NGwtLjI5NCAxMi4zNjRoNS4wMjZWNy43aC00LjQzOGwtNS45MTYgMTIuMzYzaC0uMjk0bC4yOTQtMTIuMzYzWm0yMy42NjkgMTMuNTQxIDQuNzMyLjU4NWMtLjg4OSA0LjEyLTIuOTU0IDYuNzc0LTcuMzY0IDYuNzc0LTUuMzIgMC04LjAxNi00LjcxLTguMDE2LTEwLjYgMC01Ljg4OSAyLjY4OS0xMC42IDguMDE2LTEwLjYgNC4zMTcgMCA2LjQ3NSAyLjY0OSA3LjM2NCA2LjQ3NWwtNC43MzIgMS4xNzdjLS4yOTQtMi4wNjMtMS4xNTUtNC43MS0yLjYzMi00LjcxLTEuNzcxIDAtMi42ODkgMy41MzMtMi42ODkgNy42NTEgMCA0LjA5LjkxOCA3LjY1MiAyLjY4OSA3LjY1MiAxLjQ0OS4wMTUgMi4zMy0yLjM0MSAyLjYzMi00LjQwNFptMTEuODMtMTMuNTRoLTQuNzMydjIwLjYwN2g0LjczMnYtOS4xM2guMjk0bDMuNTQ5IDkuMTNIMTY0bC01LjE3Ny0xMC42TDE2My44NDkgNy43aC01LjAyNmwtMy44NDMgOS4xM2gtLjI5NFY3LjdaIiBmaWxsPSIjZmZmIi8+PC9zdmc+Cg=="
+                                                data-tid="79e4350" /></a>
+                                    </div>
+                                </div>
+                                <div class="styles_mainContainer__faOVn">
+                                    <div class="styles_featureMenuContainer__KbrzA">
+                                        <nav class="styles_root__DR_oz kinopoisk-header-featured-menu styles_adaptive__F508O"
+                                            data-tid="78f04c5d"><a
+                                                class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                                                href="https://hd.kinopoisk.ru/" target="_self" data-tid="acc26a70"><img
+                                                    aria-label="presentation" class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                                                    src="https://avatars.mds.yandex.net/get-bunker/118781/5e4a451dabd5982b775db20bc084cc215fd0e14a/svg"
+                                                    srcSet="" data-tid="b35288c1" /><img aria-label="presentation"
+                                                    class="styles_icon__IXP4s"
+                                                    src="https://avatars.mds.yandex.net/get-bunker/61205/70cc2c1c559189c3139a315b1d06db38faefa2b5/svg"
+                                                    srcSet="" data-tid="b35288c1" />Онлайн-кинотеатр</a><a
+                                                class="styles_root__hBoYg styles_item__HaqiK kinopoisk-header-featured-menu__item"
+                                                href="https://www.kinopoisk.ru/special/smarttv_instruction?utm_source=kinopoisk&amp;utm_medium=selfpromo_kp&amp;utm_campaign=button_header"
+                                                target="_blank" data-tid="acc26a70"><img aria-label="presentation"
+                                                    class="styles_iconHover__UMGd0 styles_icon__IXP4s"
+                                                    src="https://avatars.mds.yandex.net/get-bunker/50064/9bd69a8ca16bd1fa7395dba2ab3082c4bebd306c/svg"
+                                                    srcSet="" data-tid="b35288c1" /><img aria-label="presentation"
+                                                    class="styles_icon__IXP4s"
+                                                    src="https://avatars.mds.yandex.net/get-bunker/61205/c7ca1a7300068a2cf01c57a1f351ba9d89c20ee3/svg"
+                                                    srcSet="" data-tid="b35288c1" />Установить на ТВ</a></nav>
+                                    </div>
+                                    <div class="styles_searchFormContainer__GyAL5">
+                                        <div class="styles_searchForm__AIMFU styles_searchFormDefault__QNml_"
+                                            data-tid="8d7d7cbd">
+                                            <form class="styles_form__i86wS" action="/index.php">
+                                                <div class="styles_root__dTeXi styles_searchInputElement__qNbS4"
+                                                    data-tid="b0e8f9b"><input type="text" name="kp_query"
+                                                        class="styles_input__4vNAb kinopoisk-header-search-form-input__input"
+                                                        autoComplete="off" aria-label="Фильмы, сериалы, персоны"
+                                                        placeholder="Фильмы, сериалы, персоны" value="" required="" />
+                                                    <div
+                                                        class="styles_controlContainer__5VetH kinopoisk-header-search-form-input__control-container">
+                                                        <a href="/s/" class="styles_advancedSearch__uwvnd"
+                                                            aria-label="advanced-search" tabindex="-1"><svg
+                                                                class="styles_advancedSearchIcon__Zxjax"
+                                                                xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                                viewBox="0 0 18 18">
+                                                                <path fill="#000" fill-rule="evenodd"
+                                                                    d="M5.995 10.3A2.7 2.7 0 0 1 8.504 12H17v2H8.504a2.7 2.7 0 0 1-5.018 0H1v-2h2.486a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm5.997-8.7A2.7 2.7 0 0 1 14.5 5H17v2h-2.5a2.7 2.7 0 0 1-5.017 0H1V5h8.483a2.7 2.7 0 0 1 2.509-1.7zm0 1.7a1 1 0 1 0 0 2 1 1 0 0 0 0-2z">
+                                                                </path>
+                                                            </svg></a><button type="submit"
+                                                            class="styles_root__CUh_v styles_submit__2AIpj" aria-label="submit"
+                                                            tabindex="-1" data-tid="f49ca51f"><svg
+                                                                class="styles_icon__1bYKL search-form-submit-button__icon"
+                                                                xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                                viewBox="0 0 18 18">
+                                                                <path fill="#000" fill-rule="evenodd"
+                                                                    d="M12.026 10.626L16 14.6 14.6 16l-3.974-3.974a5.5 5.5 0 1 1 1.4-1.4zM7.5 11.1a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2z">
+                                                                </path>
+                                                            </svg>Найти</button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="styles_userContainer__hLiRQ"><button type="button"
+                                        class="styles_searchButton__kXYs6"><span
+                                            class="styles_searchButtonIconSmall__poB4V"></span></button>
+                                    <div class="styles_root__JgDCj" data-tid="1a82203d">
+                                        <div><a class="styles_plusDesktopBrandingButton__X4z6T styles_root__OkfMY styles_padding4x14__J5WqH styles_root__lbhjd styles_rootLight__4o4CJ styles_rootPlus__Xx9Yy"
+                                                href="https://hd.kinopoisk.ru/?source=kinopoisk_head_button">Попробовать
+                                                Плюс</a></div><button type="button"
+                                            class="styles_loginButton__LWZQp">Войти</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+                    </div>
+                    <div class="styles_contentContainer__bi2n2 styles_baseContainer__8XBMw">
+                        <div class="styles_pending__AMNhR styles_height250__Dw0ef" data-tid="a913e1e7">
+                            <div class="styles_themeTopBanner__RLKkf" data-tid="e810e001">
+                                <div id="foxaddesktop_top_banner" class="styles_container__XXCpX" data-tid="9501d3f4"></div>
+                            </div>
+                        </div>
+                        <div class="styles_root__B1q5W styles_withBottomBorder__qPxdr styles_rootLight___QD_Q styles_root__axj8R"
+                            data-tid="21855542">
+                            <div class="styles_background__ME0M5"></div>
+                            <div class="styles_root__UtArQ" data-tid="3716659c">
+                                <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                    <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP"
+                                        data-tid="893da4ad">
+                                        <div class="styles_sidebar__mZOfP">
+                                            <div class="styles_root__JykRA styles_basicMediaSection__l88k1" data-tid="be907ee0">
+                                                <div class="styles_posterContainer__F02wH">
+                                                    <div class="styles_root__0qoat" data-tid="fe27f3c4"><a
+                                                            class="styles_posterLink__C1HRc" href="/film/32898/posters/"><img
+                                                                class="film-poster styles_root__24Jga styles_rootInLight__GwYHH image styles_root__DZigd"
+                                                                alt="Достучаться до небес (Knockin&#x27; on Heaven&#x27;s Door)"
+                                                                src="//avatars.mds.yandex.net/get-kinopoisk-image/1773646/aac37c55-3aa2-4f4d-b3ed-9f59ba426f92/300x450"
+                                                                srcSet="//avatars.mds.yandex.net/get-kinopoisk-image/1773646/aac37c55-3aa2-4f4d-b3ed-9f59ba426f92/300x450 1x, //avatars.mds.yandex.net/get-kinopoisk-image/1773646/aac37c55-3aa2-4f4d-b3ed-9f59ba426f92/600x900 2x"
+                                                                data-tid="d813cf42" /></a></div>
+                                                </div>
+                                                <div class="styles_trailerContainer__OrL6j styles_section__OVMys">
+                                                    <div class="film-trailer styles_rootInLight__Cjmob styles_rootSmSize__SXey8"
+                                                        data-tid="cc89b13d">
+                                                        <div role="button" tabindex="0"
+                                                            class="styles_previewWithAction__24bFH styles_preview__ruOp9"><img
+                                                                class="styles_previewImg__zhMic image styles_root__DZigd"
+                                                                alt="Трейлер (русский язык)"
+                                                                src="//avatars.mds.yandex.net/get-kino-vod-films-gallery/177294/c41c813424ce09afcc74ce31f68ec747/100x64_3"
+                                                                srcSet="//avatars.mds.yandex.net/get-kino-vod-films-gallery/177294/c41c813424ce09afcc74ce31f68ec747/100x64_3 1x, //avatars.mds.yandex.net/get-kino-vod-films-gallery/177294/c41c813424ce09afcc74ce31f68ec747/600x380 2x"
+                                                                data-tid="d813cf42" />
+                                                            <div
+                                                                class="styles_previewInfo__fZqll styles_mainTrailerPreviewInfo__6fFSL">
+                                                                <button type="button" class="styles_root__2V17R"
+                                                                    data-tid="f1f187d8">Трейлер</button><span
+                                                                    class="styles_duration__BiWBm">1:45</span>
+                                                            </div>
+                                                        </div><a class="styles_title__vd96O"
+                                                            href="/film/32898/video/86204/">Трейлер (русский язык)</a><span
+                                                            class="styles_date__d5xwh">15 августа 2013</span>
+                                                    </div>
+                                                </div>
+                                                <div class="styles_userControlsContainer__iYP9P styles_section__OVMys">
+                                                    <div class="styles_controlContainer__5hjSk" data-tid="5310ddc0">
+                                                        <div class="styles_foldersMenu__R90ST styles_root__g0CT9"
+                                                            data-tid="4a36b453">
+                                                            <div class="styles_root__VEPvG styles_buttonSet____zRE"
+                                                                data-tid="62abee53"><button
+                                                                    class="styles_button__MpYNC styles_listToWatchButton__N_ywG styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn">Буду
+                                                                    смотреть</button><button
+                                                                    class="styles_button__MpYNC styles_root__v9qoq styles_rootLight__njjLZ styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                                                        class="styles_tooltip__BZYE_"
+                                                                        data-tid="d43912a6">Добавить в список</span></button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="styles_rootLight__C8Tx2 styles_root__dZcuU" data-tid="e5bec5b3">
+                                                        <a href="/film/32898/folders/"
+                                                            class="styles_linkLight__etoyZ styles_link___yiZO">Все папки
+                                                            пользователей</a>
+                                                    </div>
+                                                </div>
+                                                <div class="styles_socialControlsContainer__7mYQK">
+                                                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                                        <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim"
+                                                            data-tid="893da4ad">
+                                                            <div class="styles_share__4uBuh styles_root__MJ3vO"
+                                                                data-tid="755217e">
+                                                                <div id="film-share-buttons"></div>
+                                                                <div class="styles_root__vr1TL" data-tid="7cfcb140"><span
+                                                                        class="styles_button__BSoLb styles_root__2Vgyb"
+                                                                        data-tid="ad14a6be">‌</span><span
+                                                                        class="styles_button__BSoLb styles_root__2Vgyb"
+                                                                        data-tid="ad14a6be">‌</span><span
+                                                                        class="styles_button__BSoLb styles_root__2Vgyb"
+                                                                        data-tid="ad14a6be">‌</span><span
+                                                                        class="styles_button__BSoLb styles_root__2Vgyb"
+                                                                        data-tid="ad14a6be">‌</span></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                                        <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_root__wNLLi styles_feedbackButtons__i2cPM"
+                                                            data-tid="893da4ad">
+                                                            <div class="styles_wrapper__rcDa_" data-tid="d43e8a06"><button
+                                                                    type="button"
+                                                                    class="styles_buttonError__P0JjC styles_button__qRXLB">Нашли
+                                                                    ошибку?</button><button type="button"
+                                                                    class="styles_buttonInfo__gH8CS styles_button__qRXLB">Добавить
+                                                                    инфо</button></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT styles_delimiter__rPlVI">
+                                    </div>
+                                    <div class="styles_column__r2MWX styles_md_17__FaWtp styles_lg_21__YjFTk styles_column__5dEFP"
+                                        data-tid="893da4ad">
+                                        <div class="styles_main__vjk2Q styles_main__ZXV8U">
+                                            <div class="styles_root__4VfvJ styles_basicInfoSection__EiD2J" data-tid="bb43fc51">
+                                                <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                                                    <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P"
+                                                        data-tid="893da4ad">
+                                                        <div class="styles_header__mzj3d">
+                                                            <div class="styles_title__hTCAr" data-tid="b97a4e4c">
+                                                                <h1 class="styles_title__65Zwx styles_root__l9kHe styles_root__5sqsd styles_rootInLight__juoEZ"
+                                                                    itemProp="name"><span data-tid="75209b22">Достучаться до
+                                                                        небес (1997)</span></h1>
+                                                                <div class="styles_root__LIL2v styles_rootInLight__YFjWB"
+                                                                    data-tid="7cdbd36a"><span
+                                                                        class="styles_originalTitle__JaNKM"
+                                                                        data-tid="eb6be89">Knockin&#x27; on Heaven&#x27;s
+                                                                        Door</span><span
+                                                                        class="styles_rootSmallFaded__LiPsm styles_rootSmallFadedInLight__eENN6"
+                                                                        data-tid="5c1ffa33">16+</span></div>
+                                                            </div>
+                                                            <div class="styles_buttons__SNIXo">
+                                                                <div class="styles_buttonsContainer__HREZO" data-tid="ebd410f">
+                                                                    <div class="styles_button__tQYKG">
+                                                                        <div class="style_root__BmiQ7" data-tid="be0d3e42">
+                                                                            <button
+                                                                                class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_withIconLeft__xpAII"
+                                                                                title="Буду смотреть"><span
+                                                                                    class="style_iconLeft__vU_kH"
+                                                                                    data-tid="c8f29373"><span
+                                                                                        class="style_icon__QLJtP style_iconLight__o7Xai"></span></span>Буду
+                                                                                смотреть</button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="styles_button__tQYKG">
+                                                                        <div class="style_root__eRD4o" data-tid="17569662">
+                                                                            <div class="style_root__Bt5S1" data-tid="818a5033">
+                                                                                <button
+                                                                                    class="style_button__LAvI6 style_buttonLarge__pneTU style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_withIconLeft__xpAII style_onlyIcon__D09QE"><span
+                                                                                        class="style_iconLeft__vU_kH"
+                                                                                        data-tid="c8f29373"><span
+                                                                                            class="style_icon__V3VQE style_dropdownButtonIconLight__A2zd0"
+                                                                                            data-tid="e07f9f7b"></span></span></button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_watchingServices__0VLui"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb"
+                                                        data-tid="893da4ad">
+                                                        <div class="styles_root__lMV74 styles_filmRating__H_B11"
+                                                            data-tid="86be324">
+                                                            <div class="film-rating styles_root__7rVf_ styles_rootMSize__B8Ch0 styles_rootInLight__4w53g"
+                                                                data-tid="71598065">
+                                                                <div class="styles_ratingValue__UO6Zl styles_rootMSize__B8Ch0">
+                                                                    <div class="styles_valueBlock___nWKb"><span
+                                                                            class="styles_value__N2Vzt"><span
+                                                                                class="film-rating-value styles_rootPositive__mLBSO">8.6</span></span>
+                                                                    </div>
+                                                                    <div class="styles_countBlock__jxRDI"><span
+                                                                            class="styles_count__iOIwD">499 889 оценок</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_kinopoiskRatingSnippet__tqtsG">
+                                                                <div class="style_root__tg2Nx" data-tid="410c06ef"><button
+                                                                        class="style_button__LAvI6 style_buttonMedium__Z93fP style_buttonDefault__c0tGZ style_buttonLight__NGs0i style_fullWidth__ib6MF">Оценить
+                                                                        фильм</button></div>
+                                                            </div>
+                                                            <div class="styles_reviewsLink__5xOtO">
+                                                                <div class="styles_reviewCountLight__XNZ9P styles_reviewCount__w_RrM"
+                                                                    data-tid="d87cf2dd">599 рецензий</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="styles_root__2kxYy styles_topLine__xigow" data-tid="914bd01c">
+                                                    <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P"
+                                                        data-tid="893da4ad">
+                                                        <h3
+                                                            class="film-page-section-title styles_rootTitle__2g8Sk styles_tableHeader__HdxpN styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                                            О фильме</h3>
+                                                        <div class="" data-test-id="encyclopedic-table" data-tid="bd126b5e">
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Год
+                                                                    производства</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="cfbe5a01"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/lists/movies/year--1997/?b=films&amp;b=top">1997</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Страна
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/lists/movies/country--3/?b=films&amp;b=top"
+                                                                        data-tid="603f73a4">Германия</a></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Жанр
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__5PEXQ"
+                                                                    data-tid="28726596">
+                                                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                        data-tid="d5ff4cc"><a
+                                                                            class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                            href="/lists/movies/genre--drama/?b=films&amp;b=top"
+                                                                            data-tid="603f73a4">драма</a>, <a
+                                                                            class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                            href="/lists/movies/genre--comedy/?b=films&amp;b=top"
+                                                                            data-tid="603f73a4">комедия</a>, <a
+                                                                            class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                            href="/lists/movies/genre--crime/?b=films&amp;b=top"
+                                                                            data-tid="603f73a4">криминал</a></div><a
+                                                                        href="/film/32898/keywords/"
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk keywords">слова</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Слоган
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="e1e37c21">
+                                                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4">
+                                                                        «Быстрый автомобиль, миллион марок в багажнике, и всего
+                                                                        одна неделя жить»</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Режиссер</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/83086/" data-tid="603f73a4">Томас Ян</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Сценарий</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/26503/" data-tid="603f73a4">Тиль
+                                                                        Швайгер</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/83086/" data-tid="603f73a4">Томас Ян</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Продюсер</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/2185/" data-tid="603f73a4">Андре
+                                                                        Хеннике</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/26503/" data-tid="603f73a4">Тиль
+                                                                        Швайгер</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/83130/" data-tid="603f73a4">Вольфганг
+                                                                        Браун</a>, <a href="/film/32898/cast/who_is/producer/"
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk">...</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Оператор</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/616281/" data-tid="603f73a4">Геро
+                                                                        Штеффен</a></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Композитор</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/632686/" data-tid="603f73a4">Кристиан
+                                                                        Неандер</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/632687/" data-tid="603f73a4">Франц
+                                                                        Пласа</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/632688/" data-tid="603f73a4">Жан Плевка</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Художник</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/2007906/" data-tid="603f73a4">Моника
+                                                                        Бауэрт</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/693090/" data-tid="603f73a4">Хайке Вебер</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Монтаж
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/name/258848/" data-tid="603f73a4">Александр
+                                                                        Бернер</a></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Бюджет
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="cfbe5a01"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/film/32898/box/">DEM 4 300 000</a></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Сборы в
+                                                                    США</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_root__XwglO"
+                                                                    data-tid="41068c56"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/film/32898/box/">${'$'}5 710</a><a
+                                                                        href="/film/32898/box/"
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk">сборы</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Зрители
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="328581d6"><span
+                                                                        class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                                                        data-tid="59164a46"><img
+                                                                            src="https://st.kp.yandex.net/images/flags/flag-3.gif"
+                                                                            alt="Германия" class="styles_icon__tVSsA" />3.2 млн
+                                                                    </span>, <span
+                                                                        class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                                                        data-tid="59164a46"><img
+                                                                            src="https://st.kp.yandex.net/images/flags/flag-15.gif"
+                                                                            alt="Испания" class="styles_icon__tVSsA" />112.8 тыс
+                                                                    </span>, <span
+                                                                        class="styles_valueDark__BCk93 styles_value__g6yP4 styles_item__qLVK1"
+                                                                        data-tid="59164a46"><img
+                                                                            src="https://st.kp.yandex.net/images/flags/flag-21.gif"
+                                                                            alt="Швейцария" class="styles_icon__tVSsA" />90 тыс
+                                                                    </span>, <a href="/film/32898/dates/"
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk">...</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Премьера в Росcии</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="ca30f216"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/premiere/ru/1997/to/32898/#32898"
+                                                                        data-tid="3aaab4fd">1 ноября 1997</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/lists/m_act[company]/361/"
+                                                                        data-tid="3aaab4fd">«ОРТ»</a><span
+                                                                        class="styles_stickers__hGaZH"></span></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Премьера в мире</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/film/32898/dates/" data-tid="603f73a4">20 февраля
+                                                                        1997</a>, <a href="/film/32898/dates/"
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk">...</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">
+                                                                    Ре-релиз (РФ)</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="d5ff4cc"><a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/premiere/ru/2022/to/32898/#32898"
+                                                                        data-tid="603f73a4">9 июня 2022</a>, <a
+                                                                        class="styles_linkDark__7m929 styles_link__3QfAk"
+                                                                        href="/lists/m_act[company]/301/"
+                                                                        data-tid="603f73a4">«Capella Film»</a></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Релиз
+                                                                    на DVD</div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="e1e37c21">
+                                                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4">28
+                                                                        февраля 2008, «CP-Digital»</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Возраст
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4 styles_restrictionRow__JTXWD"
+                                                                    data-tid="b7fd8541"><a
+                                                                        class="styles_restrictionLink__iy4n9"><span
+                                                                            class="styles_rootHighContrast__Bevle styles_rootHighContrastInLight__513Hu"
+                                                                            data-tid="5c1ffa33">16+</span></a></div>
+                                                            </div>
+                                                            <div class="styles_rowDark__ucbcz styles_row__da_RK"
+                                                                data-tid="7cda04a5">
+                                                                <div class="styles_titleDark___tfMR styles_title__b1HVo">Время
+                                                                </div>
+                                                                <div class="styles_valueDark__BCk93 styles_value__g6yP4"
+                                                                    data-tid="e1e37c21">
+                                                                    <div class="styles_valueDark__BCk93 styles_value__g6yP4">87
+                                                                        мин. / 01:27</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_6__eGSDb"
+                                                        data-tid="893da4ad">
+                                                        <div class="styles_mainSide__qVMH4 styles_mainSideWithTopList__R4sMm">
+                                                            <div class="styles_topList__1xtLA styles_topListLight___o0qM"
+                                                                data-tid="d3ba9b85"><a
+                                                                    class="styles_root__UjpdS styles_rootLight__6WKJd"
+                                                                    href="/lists/movies/top250/" data-tid="2c52e3fd">
+                                                                    <div class="styles_root__ixhBE styles_icon__0l7mg styles_size41x42__BC3fA"
+                                                                        data-tid="a757238c"></div><span
+                                                                        class="styles_root__Q2THk styles_listTitle__mDgWK"
+                                                                        data-tid="b012c88c">топ 250</span>
+                                                                </a></div>
+                                                            <div class="film-crew-block styles_filmCrew__tx5Wt"
+                                                                data-tid="f984424">
+                                                                <div class="styles_actors__wn_C4" data-tid="38ecf27e">
+                                                                    <h3
+                                                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                                                        <a href="/film/32898/cast/" class="styles_link__KtvyW"
+                                                                            data-tid="6a319a9e">В главных ролях</a>
+                                                                    </h3>
+                                                                    <ul class="styles_list___ufg4">
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/26503/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Тиль Швайгер</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/83087/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Ян Йозеф Лиферс</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/83088/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Тьерри Ван Вервеке</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/52224/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Мориц Бляйбтрой</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/83089/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Хуб Стапель</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/83090/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Леонард Лансинк</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/28157/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Ральф Херфорт</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/83091/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Корнелия Фробёсс</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/19216/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Рутгер Хауэр</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/28135/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Вилли Томчик</a></li>
+                                                                    </ul><a href="/film/32898/cast/"
+                                                                        class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">56
+                                                                        актеров</a>
+                                                                </div>
+                                                                <div data-tid="38ecf27e">
+                                                                    <h3
+                                                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_title__RbMgF styles_rootXxsm__Jjccw styles_root__B8zR6 styles_rootDark__7yGTp">
+                                                                        <a href="/film/32898/cast/who_is/voice/"
+                                                                            class="styles_link__KtvyW" data-tid="6a319a9e">Роли
+                                                                            дублировали</a>
+                                                                    </h3>
+                                                                    <ul class="styles_list___ufg4">
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/1053232/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Алексей Мясников</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/304577/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Алексей Иващенко</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/1664122/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Виктор Бохон</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/273560/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Вадим Андреев</a></li>
+                                                                        <li class="styles_root__vKDSE styles_rootInLight__EFZzH"
+                                                                            data-tid="2e6eb73e"><a href="/name/1159780/"
+                                                                                class="styles_link__Act80" itemProp="actor"
+                                                                                data-tid="d4e8d214">Александр Груздев</a></li>
+                                                                    </ul><a href="/film/32898/cast/who_is/voice/"
+                                                                        class="styles_moreItemsLink__hfZmk styles_moreItems__tlpNN">21
+                                                                        актер</a>
+                                                                </div>
+                                                            </div>
+                                                            <div class="styles_root__b_uZM styles_awards__stpdy"
+                                                                data-tid="8986781d"><a href="/film/32898/awards/"
+                                                                    class="styles_link__J0S43 styles_linkMff__rnkoW"
+                                                                    data-tid="cbdd8e90"><img class="image styles_root__DZigd"
+                                                                        src="//st.kp.yandex.net/images/movies/awardMmkf.png"
+                                                                        data-tid="d813cf42" /><span
+                                                                        class="styles_nominationCount__Lf_e1 styles_nominationCountWinner__9eoZf">1</span></a>
+                                                                <div class="styles_popover__08Mlf styles_root__SeBrp"
+                                                                    data-tid="e30ff91d">
+                                                                    <div class="styles_nominations__I5ywE">
+                                                                        <h3
+                                                                            class="film-page-section-title styles_rootTitle__2g8Sk styles_title__8qqmP styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                                                            <a href="/film/32898/awards/"
+                                                                                class="styles_link__KtvyW"
+                                                                                data-tid="6a319a9e">ММКФ<span
+                                                                                    class="styles_moreItem__U5bzS">1</span></a>
+                                                                        </h3>
+                                                                        <ul class="styles_root__GOA2M" data-tid="ae580d90">
+                                                                            <li><span
+                                                                                    class="styles_year__jgPZo">1997</span><span
+                                                                                    class="styles_listTitle__8bDJP styles_listTitleWinner__TYTyo">Победитель</span>
+                                                                            </li>
+                                                                            <li data-tid="b4b29a33"><span
+                                                                                    class="styles_year__jgPZo"></span>
+                                                                                <div>
+                                                                                    <div class="styles_nomination__kTCOI"
+                                                                                        data-tid="b4b29a33">
+                                                                                        <div
+                                                                                            class="styles_nominationTitle__dlmVi styles_nominationWinnerTitle__gHBZd">
+                                                                                            Лучшая мужская роль - Серебряный
+                                                                                            «Святой Георгий»</div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </li>
+                                                                        </ul>
+                                                                        <ul class="styles_root__GOA2M" data-tid="ae580d90">
+                                                                            <li><span
+                                                                                    class="styles_year__jgPZo">1997</span><span
+                                                                                    class="styles_listTitle__8bDJP">Номинации</span>
+                                                                            </li>
+                                                                            <li data-tid="b4b29a33"><span
+                                                                                    class="styles_year__jgPZo"></span>
+                                                                                <div>
+                                                                                    <div class="styles_nomination__kTCOI"
+                                                                                        data-tid="b4b29a33">
+                                                                                        <div
+                                                                                            class="styles_nominationTitle__dlmVi">
+                                                                                            Приз за лучший фильм - Золотой
+                                                                                            «Святой Георгий»</div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </li>
+                                                                        </ul><a href="/film/32898/awards/"
+                                                                            class="styles_allAwardsLink__6vgYm"
+                                                                            data-tid="935823d">Все награды</a>
+                                                                    </div>
+                                                                    <div class="styles_mainAward__Riz_k"><a
+                                                                            href="/film/32898/awards/"
+                                                                            class="styles_link__J0S43 styles_linkMff__rnkoW"
+                                                                            data-tid="cbdd8e90"><img
+                                                                                class="image styles_root__DZigd"
+                                                                                src="//st.kp.yandex.net/images/movies/awardMmkf.png"
+                                                                                data-tid="d813cf42" /><span
+                                                                                class="styles_nominationCount__Lf_e1 styles_nominationCountWinner__9eoZf">1</span></a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                                    <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e"
+                                                        data-tid="893da4ad"></div>
+                                                </div>
+                                                <div class="styles_root__2kxYy styles_topLine__xigow styles_topLineUserNote__hxKqF"
+                                                    data-tid="914bd01c">
+                                                    <div class="styles_column__r2MWX styles_md_11__UdIH_ styles_lg_15__Ai53P"
+                                                        data-tid="893da4ad"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="styles_root__B1q5W styles_rootLight___QD_Q styles_root__axj8R" data-tid="21855542">
+                            <div class="styles_root__UtArQ" data-tid="3716659c">
+                                <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                    <div class="styles_column__r2MWX styles_md_16__PEQm2 styles_lg_20__JnV5e styles_column__5dEFP"
+                                        data-tid="893da4ad">
+                                        <div class="styles_main__vjk2Q styles_additionalInformationSection__GmCD7">
+                                            <div class="styles_root__KtmEB" data-tid="37b61dba">
+                                                <div data-tid="e0411e82">
+                                                    <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                                                </div>
+                                            </div><span id="film-details-info" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div data-tid="e0411e82">
+                                                    <div class="film-details-block styles_root__FF738" data-tid="71e757c">
+                                                        <div class="styles_tabsSection__aKq4_">
+                                                            <div class="styles_root__rVp2r" data-tid="3855337e">
+                                                                <div class="styles_itemsSpoiler__ROHvQ styles_ssr__ytsd7"
+                                                                    data-tid="de3d23c9">
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_itemActive__Nd9PE styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><span
+                                                                                class="styles_itemActive__S4PQM styles_item__wPOY6">Обзор</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/awards/">Награды</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/dates/">Премьеры</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/stills/">Изображения</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/video/">Трейлеры</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/studio/">Студии</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/other/">Связи</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><a
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                href="/film/32898/reviews/">Рецензии</a></div>
+                                                                    </div>
+                                                                    <div class="styles_itemContainerWrap__7O8FL"
+                                                                        data-tid="7232869f">
+                                                                        <div class="styles_root__WrVXN styles_item__CGufh"
+                                                                            data-tid="b92ae11f"><span
+                                                                                class="styles_itemDefault__nPthf styles_item__wPOY6">Еще...</span>
+                                                                            <div class="styles_dropDownContainer__g27mF">
+                                                                                <div
+                                                                                    class="styles_dropDown__QqORT styles_dropDown__wMbnB">
+                                                                                    <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                                                        data-tid="b92ae11f"><a
+                                                                                            class="styles_itemDisbale__de_3q styles_item__wPOY6"
+                                                                                            href="/film/32898/sites/">Сайты</a>
+                                                                                    </div>
+                                                                                    <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                                                        data-tid="b92ae11f"><a
+                                                                                            class="styles_itemDisbale__de_3q styles_item__wPOY6"
+                                                                                            href="/film/32898/tracks/">Саундтреки</a>
+                                                                                    </div>
+                                                                                    <div class="styles_root__WrVXN styles_subItem__IAR5h styles_item__CGufh"
+                                                                                        data-tid="b92ae11f"><a
+                                                                                            class="styles_itemDefault__nPthf styles_item__wPOY6"
+                                                                                            href="/film/32898/subscribe/">Подписка
+                                                                                            на обновления</a></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles_synopsisSection__nJoAj">
+                                                            <div class="styles_filmSynopsis__Cu2Oz" data-tid="7f916518">
+                                                                <p class="styles_paragraph__wEGPz" data-tid="bbb11238">Судьба
+                                                                    сводит двух незнакомцев в больнице, где они получают
+                                                                    смертельные диагнозы. Но парни не хотят мириться с судьбой и
+                                                                    тихо заканчивать свои дни в больничной палате - угнав машину
+                                                                    с миллионом немецких марок в багажнике, они сбегают из
+                                                                    больницы. </p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles_filmRatingSection___Sph9">
+                                                            <div class="" data-tid="af0b971c">
+                                                                <h3
+                                                                    class="film-page-section-title styles_rootTitle__2g8Sk styles_title__vtVG_ styles_rootMd__7Q1_t styles_root__B8zR6 styles_rootDark__7yGTp">
+                                                                    Рейтинг фильма</h3>
+                                                                <div class="styles_content__QYDgA">
+                                                                    <div class="styles_formContainer__yBeUw">
+                                                                        <form
+                                                                            class="styles_form__2pcvP styles_form__Bw8gI film-rate-form"
+                                                                            data-tid="ad886728"><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="1" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="1" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="2" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="2" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="3" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="3" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="4" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="4" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="5" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="5" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="6" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="6" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="7" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="7" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="8" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="8" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv styles_rootFilledNumber__aUL_f"
+                                                                                data-value="9" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="9" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span><span
+                                                                                        style="width:63%"
+                                                                                        class="styles_partialIcon__PpsMw styles_defaultIcon__8fqbF styles_baseIcon__MNyDV styles_filledIcon__gob6k styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label><label
+                                                                                class="styles_radio__IqZef styles_root__FBsKv"
+                                                                                data-value="10" data-tid="5d365105"><input
+                                                                                    type="radio" class="styles_input__SRM0B"
+                                                                                    name="star" value="10" /><span
+                                                                                    class="styles_iconContainer__9nPOy"><span
+                                                                                        class="styles_icon__snCTV styles_defaultIcon__8fqbF styles_baseIcon__MNyDV"
+                                                                                        data-tid="5a15c5d7"></span></span></label>
+                                                                        </form>
+                                                                        <div class="styles_buttons__dSk8l"><button
+                                                                                class="styles_scrollToAddReviewButton__GAfqB styles_root__sjOi_ styles_rootLight__zgQRd styles_rootWithTitle__F2vRG styles_root__lbhjd styles_rootLight__4o4CJ styles_rootGhost__7yeKn"><span
+                                                                                    class="styles_tooltip__BZYE_"
+                                                                                    data-tid="d43912a6">Написать
+                                                                                    рецензию</span>Написать рецензию</button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="styles_ratingContainer__RhJ96">
+                                                                        <div>
+                                                                            <div class="film-rating styles_root__7rVf_ styles_rootLSize__X4aDt styles_rootInLight__4w53g"
+                                                                                data-tid="71598065">
+                                                                                <div
+                                                                                    class="styles_ratingValue__UO6Zl styles_rootLSize__X4aDt">
+                                                                                    <div class="styles_valueBlock___nWKb"><span
+                                                                                            class="styles_value__N2Vzt"><a
+                                                                                                class="film-rating-value styles_rootKpTop__pByhB styles_rootLink__mm0kW"
+                                                                                                href="/film/32898/votes/">8.6</a></span><a
+                                                                                            class="styles_topListPositionBadge__j5rPp styles_root__jYb9p styles_rootLegacy__Ft6DV"
+                                                                                            href="/lists/movies/top250/"
+                                                                                            data-tid="45e77845">
+                                                                                            <div class="styles_root__ixhBE styles_icon__fFV9t styles_size36x37__A0Apc"
+                                                                                                data-tid="a757238c"></div>
+                                                                                            <div>
+                                                                                                <div
+                                                                                                    class="styles_content__yUcEK">
+                                                                                                    <span
+                                                                                                        class="styles_root__Q2THk styles_title__b0LlO"
+                                                                                                        data-tid="b012c88c">топ
+                                                                                                        250</span><span
+                                                                                                        class="styles_root__Q2THk styles_position__pm10U"
+                                                                                                        data-tid="b012c88c">#
+                                                                                                        <!-- -->24
+                                                                                                    </span>
+                                                                                                </div><span
+                                                                                                    class="styles_root__Q2THk styles_subtitle__9DKd0"
+                                                                                                    data-tid="b012c88c">Кинопоиск</span>
+                                                                                            </div>
+                                                                                        </a></div>
+                                                                                    <div class="styles_countBlock__jxRDI"><span
+                                                                                            class="styles_count__iOIwD">499 889
+                                                                                            оценок</span><span
+                                                                                            class="styles_count__iOIwD">
+                                                                                            <div class="film-sub-rating"
+                                                                                                data-tid="3d4f49c8"><span
+                                                                                                    class="styles_valueSection__0Tcsy">IMDb
+                                                                                                    <!-- -->:
+                                                                                                    <!-- -->7.90
+                                                                                                </span><span
+                                                                                                    class="styles_count__89cAz">29
+                                                                                                    998 оценок</span></div>
+                                                                                        </span></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="styles_criticRatingSection__rlcU9">
+                                                            <div class="styles_root__i6At7 styles_rootSingleRating__zB3Yi"
+                                                                data-tid="f914d65f">
+                                                                <div class="styles_ratingBar__W5otN" data-tid="9f39fdf1">
+                                                                    <h3
+                                                                        class="film-page-section-title styles_rootTitle__2g8Sk styles_header__I8hG1 styles_rootSm__r1lYg styles_root__B8zR6 styles_rootDark__7yGTp">
+                                                                        <a href="/film/32898/press/" class="styles_link__KtvyW"
+                                                                            data-tid="6a319a9e">Рейтинг кинокритиков в
+                                                                            России</a>
+                                                                    </h3>
+                                                                    <div class="styles_filmRatingBar__Mks7X styles_ratingBar__NSzsB styles_withValue__PEUCo"
+                                                                        data-tid="d610b8e8">
+                                                                        <div class="styles_greenBar__NAQmT styles_bar__7hk5H"
+                                                                            style="flex:100;min-width:30px">3</div>
+                                                                        <div class="styles_redBar__b_rlR styles_bar__7hk5H"
+                                                                            style="flex:0"></div>
+                                                                    </div>
+                                                                    <div class="styles_actionBar__6SGOg">
+                                                                        <div class="styles_actionBarLeft__rwQsY">
+                                                                            <div class="film-rating styles_root__7rVf_ styles_rootSSize__sQJqB styles_rootInLight__4w53g"
+                                                                                data-tid="71598065">
+                                                                                <div
+                                                                                    class="styles_ratingValue__UO6Zl styles_rootSSize__sQJqB">
+                                                                                    <div class="styles_valueBlock___nWKb"><span
+                                                                                            class="styles_value__N2Vzt"><span
+                                                                                                class="film-rating-value styles_rootPositive__mLBSO">100%</span></span>
+                                                                                    </div>
+                                                                                    <div class="styles_countBlock__jxRDI"><span
+                                                                                            class="styles_count__iOIwD">3
+                                                                                            оценки</span></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><span id="film-similar_movies" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__AphAt" data-tid="718c3e1"><span
+                                                        class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_carousel__TDvSy">
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                </div>
+                                            </div><span id="film-trailers" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__NaGgU" data-tid="388eb013"><span
+                                                        class="styles_title__DqgWT styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_root__2kxYy" data-tid="914bd01c">
+                                                        <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7"
+                                                            data-tid="893da4ad">
+                                                            <div class="" data-tid="2e582843"><span
+                                                                    class="styles_preview__ruOp9 styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span></div>
+                                                        </div>
+                                                        <div class="styles_column__r2MWX styles_md_8__YNPjM styles_lg_10__hutg7"
+                                                            data-tid="893da4ad">
+                                                            <div class="" data-tid="2e582843"><span
+                                                                    class="styles_preview__ruOp9 styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_title__vd96O styles_title__dm9vQ styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_date__d5xwh styles_date__X6slX styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><span id="film-facts" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__DA3xg" data-tid="f66307a6"><span
+                                                        class="styles_title__juLbV styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span><span
+                                                        class="styles_trivias__dYVWd styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span></div>
+                                            </div><span id="film-bloopers" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__DA3xg" data-tid="f66307a6"><span
+                                                        class="styles_title__juLbV styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span><span
+                                                        class="styles_trivias__dYVWd styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span></div>
+                                            </div><span id="film-media-posts" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__5UEhB" data-tid="bb544b3"><span
+                                                        class="styles_title__G7P6B styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_carousel__a_hbM">
+                                                        <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f">
+                                                            <span class="styles_image__yrRqu styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span>
+                                                            <div class="styles_content__mbyG4"><span
+                                                                    class="styles_title__c_Mad styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_date__RRcaK styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span></div>
+                                                        </div>
+                                                        <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f">
+                                                            <span class="styles_image__yrRqu styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span>
+                                                            <div class="styles_content__mbyG4"><span
+                                                                    class="styles_title__c_Mad styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_date__RRcaK styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span></div>
+                                                        </div>
+                                                        <div class="styles_root__zc9LM styles_item__XpypV" data-tid="70f4c18f">
+                                                            <span class="styles_image__yrRqu styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span>
+                                                            <div class="styles_content__mbyG4"><span
+                                                                    class="styles_title__c_Mad styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_subtitle__1U4oC styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span><span
+                                                                    class="styles_date__RRcaK styles_root__2Vgyb"
+                                                                    data-tid="ad14a6be">‌</span></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><span id="today-in-cinema-block" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__AphAt" data-tid="718c3e1"><span
+                                                        class="styles_title__WdckK styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_carousel__TDvSy">
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_card__oVZiZ" data-tid="f87b3509"><span
+                                                                class="styles_poster__EfxdH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardTitle__c0Qni styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_cardSubtitle__eJwHH styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                </div>
+                                            </div><span id="film-critic-reviews" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__IDbib" data-tid="590d7889"><span
+                                                        class="styles_title__1_WZz styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_carousel__pAWGW"><span
+                                                            class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                                                            data-tid="ad14a6be">‌</span><span
+                                                            class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                                                            data-tid="ad14a6be">‌</span><span
+                                                            class="styles_item__8JpPx styles_root__9s9NS styles_root__2Vgyb"
+                                                            data-tid="ad14a6be">‌</span></div>
+                                                </div>
+                                            </div>
+                                            <div id="user-reviews" class="styles_root__bpW7N" data-tid="7a20dd1e">
+                                                <div data-tid="e0411e82"><span id="film-users-reviews" style="height:0"
+                                                        data-tid="32753834"></span>
+                                                    <div style="min-width:1px" data-tid="517927c6">
+                                                        <div class="styles_root__rly1E" data-tid="a4f2984f"><span
+                                                                class="styles_title__4zZWY styles_root__llf0m styles_rootLg__v_8HV styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_button__hH7LK styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_review__qp_BA styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="styles_delimiter__m7GQp styles_delimiterLight__tPYdT"></div>
+                                    <div class="styles_column__r2MWX styles_md_6__XDxd6 styles_lg_8__7Mdim styles_column__5dEFP styles_sidebarSection__q_p1Y"
+                                        data-tid="893da4ad">
+                                        <div class="styles_sidebar__mZOfP">
+                                            <div class="" data-tid="43d5b8ef">
+                                                <div class="" data-tid="e810e001">
+                                                    <div id="foxadbanner_200_200_film" class="styles_container__XXCpX"
+                                                        data-tid="9501d3f4"></div>
+                                                </div>
+                                            </div>
+                                            <div class="styles_root____5P5" data-tid="14985c6b">
+                                                <div class="styles_header__iErfu">
+                                                    <nav class="styles_nav__gHl7k"><button tabindex="0" type="button"
+                                                            class="styles_root__5QqzE styles_rootSelected__oVvef"
+                                                            data-tid="1f6a4ca6">Друзья</button></nav>
+                                                    <div class="styles_rating__sV8yH"></div>
+                                                </div>
+                                                <div class="styles_root__sGbD8" data-tid="c17d21c6"><button tabindex="0"
+                                                        type="button" class="styles_link__xVM_W">Найдите друзей</button>,
+                                                    зарегистрированных на Кинопоиске, и здесь появятся оценки, которые ваши
+                                                    друзья поставили этому фильму...</div>
+                                            </div><span id="movie-lists-relations" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div class="styles_root__UkkRY" data-tid="d34ff620"><span
+                                                        class="styles_skeletonTitle__zDdnJ styles_title__zJKfl styles_root__llf0m styles_rootSm__Nt66I styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                                        <div class="styles_titleWrapper__Ik_kf"><span
+                                                                class="styles_title__4qO8I styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                    <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                                        <div class="styles_titleWrapper__Ik_kf"><span
+                                                                class="styles_title__4qO8I styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                    <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                                        <div class="styles_titleWrapper__Ik_kf"><span
+                                                                class="styles_title__4qO8I styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                    <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                                        <div class="styles_titleWrapper__Ik_kf"><span
+                                                                class="styles_title__4qO8I styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                    <div class="styles_root__8XJ8A styles_item__XMMSz" data-tid="4b01f8b7">
+                                                        <div class="styles_img__dgPpf styles_img__SQ08u"></div>
+                                                        <div class="styles_titleWrapper__Ik_kf"><span
+                                                                class="styles_title__4qO8I styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_subtitle__A8D9D styles_subtitle__qdb5g styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                </div>
+                                            </div><span id="soundtrack-section" style="height:0" data-tid="32753834"></span>
+                                            <div style="min-width:1px" data-tid="517927c6">
+                                                <div data-tid="373566cd"><span
+                                                        class="styles_skeletonTitle__uDC2G styles_root__llf0m styles_rootMd__Mp2De styles_root__2Vgyb"
+                                                        data-tid="ad14a6be">‌</span>
+                                                    <div class="styles_skeletonIframe__bRjU0">
+                                                        <div class="styles_skeletonCoverWrap__HoP_s"><span
+                                                                class="styles_skeletonPicture__aal6r styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                        <div class="styles_skeletonContent__sfMYz"><span
+                                                                class="styles_skeletonAlbumTitle__ZYn6S styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_skeletonSubtitle__wUNb_ styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_skeletonPlayButton___gNe9 styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span><span
+                                                                class="styles_skeletonSong__m2xee styles_root__2Vgyb"
+                                                                data-tid="ad14a6be">‌</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="styles_sticky__S5Rjy" data-tid="5da1a3ef">
+                                                <div class="styles_root__TryBS">
+                                                    <div class="" style="min-width:1px" data-tid="517927c6"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="styles_footerContainer__Mk60T styles_baseContainer__8XBMw">
+                        <footer class="footer styles_rootDark__mtmaQ styles_root__sUtn2" data-tid="995d0553">
+                            <section class="styles_root__kcCHj social-icons styles_socialMenu__gLaiH" data-tid="39df70f"><a
+                                    class="styles_icon__cHky_" href="https://vk.com/kinopoisk" target="_blank"
+                                    rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/118781/0ae3d1ca27d3794204beec7d3810025f8c2b7e87/svg"
+                                        alt="https://vk.com/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+                                    class="styles_icon__cHky_" href="https://www.facebook.com/kinopoisk" target="_blank"
+                                    rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/56833/0baf23635975a9f1b481833f37653aa2efceb3a1/svg"
+                                        alt="https://www.facebook.com/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+                                    class="styles_icon__cHky_" href="https://twitter.com/kinopoiskru" target="_blank"
+                                    rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/61205/97123f0bc0c689932a2fb6b62d3ab8ce04d7e936/svg"
+                                        alt="https://twitter.com/kinopoiskru" loading="lazy" data-tid="9107e4a2" /></a><a
+                                    class="styles_icon__cHky_" href="https://telegram.me/kinopoisk" target="_blank"
+                                    rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/56833/9f570502e378d5e28a5a173a273fa811c4490a73/svg"
+                                        alt="https://telegram.me/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a><a
+                                    class="styles_icon__cHky_" href="https://www.instagram.com/kinopoisk/" target="_blank"
+                                    rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/50064/c6b1a28b4bf580d4cf96ec7f262aace67a4dde2e/svg"
+                                        alt="https://www.instagram.com/kinopoisk/" loading="lazy" data-tid="9107e4a2" /></a><a
+                                    class="styles_icon__cHky_" href="https://www.youtube.com/user/kinopoisk" target="_blank"
+                                    rel="noopener noreferrer" aria-label="presentation" data-tid="2e9b873"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/128809/65fe1abdd405eb82aec7490588a1ec6745d9ab87/svg"
+                                        alt="https://www.youtube.com/user/kinopoisk" loading="lazy" data-tid="9107e4a2" /></a>
+                            </section>
+                            <ul class="footer__content-links styles_contentMenu__OgjQP">
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="https://yandex.ru/jobs/vacancies/dev/?from=kinopoisk&amp;services=kinopoisk"
+                                        target="_blank" rel="noopener noreferrer"
+                                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Вакансии</a>
+                                </li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="https://yandex.ru/adv/products/display/kinopoiskmedia" target="_blank"
+                                        rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                                        data-tid="2e9b873">Реклама</a></li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="/docs/usage/" target="_blank" rel="noopener noreferrer"
+                                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Соглашение</a>
+                                </li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="https://yandex.ru/support/kinopoisk/index.html" target="_blank"
+                                        rel="noopener noreferrer" class="footer__content-link styles_contentLink__mRKj9"
+                                        data-tid="2e9b873">Справка</a></li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="/media/rubric/19/" target="_blank" rel="noopener noreferrer"
+                                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Блог</a></li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="https://www.surveygizmo.eu/s3/90259271/" target="_blank" rel="noopener noreferrer"
+                                        class="footer__content-link styles_contentLink__mRKj9" data-tid="2e9b873">Участие в
+                                        исследованиях</a></li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2" data-tid="99325639"><a
+                                        href="https://kinopoisk.userecho.com/" target="_blank" rel="noopener noreferrer"
+                                        class="footer__content-link styles_contentLink__mRKj9"
+                                        data-tid="2e9b873">Предложения</a></li>
+                                <li class="footer__content-item styles_contentMenuItem__yTKp2"><button type="button"
+                                        class="styles_contentButton__Yfvdh">Служба поддержки</button></li>
+                            </ul>
+                            <div class="styles_root__a_qyh styles_mobileAppsMenu__E1mGj styles_rootDark__ZR7rh"
+                                data-tid="358cef48"><a class="styles_store__JFbwQ"
+                                    href="https://10267.redirect.appmetrica.yandex.com/mainView?appmetrica_tracking_id=170895231946863928"
+                                    target="_blank" rel="noopener noreferrer" data-tid="7777859c"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/50064/9de0796ad18834328b4d4858b524bf8ce6f31f98/svg"
+                                        alt="Загрузить приложение" loading="lazy" /></a><a class="styles_store__JFbwQ"
+                                    href="https://redirect.appmetrica.yandex.com/serve/603240792315703184" target="_blank"
+                                    rel="noopener noreferrer" data-tid="7777859c"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/994123/d4d889eb60c34ed8ca7d3c0fe965b8327e229fcf/svg"
+                                        alt="Загрузить приложение" loading="lazy" /></a><a class="styles_store__JFbwQ"
+                                    href="https://redirect.appmetrica.yandex.com/serve/1179706852124993595" target="_blank"
+                                    rel="noopener noreferrer" data-tid="7777859c"><img
+                                        src="//avatars.mds.yandex.net/get-bunker/128809/1b6561563c22de1014279a528719f4f7d9360296/svg"
+                                        alt="Загрузить приложение" loading="lazy" /></a></div>
+                            <section class="styles_bottomSection__qx7AY footer__bottom">
+                                <div class="styles_bottomSectionInfo__0XSte footer__bottom-info">
+                                    <div><span class="styles_year__tYQPp footer__bottom-info-year">© 2003 —
+                                            <!-- -->2022
+                                            <!-- -->,
+                                        </span><a class="styles_bottomSectionInfoLink__Z8Szl footer__bottom-info-link"
+                                            href="https://www.kinopoisk.ru/" target="_blank" rel="noopener noreferrer"
+                                            data-tid="2e9b873">Кинопоиск</a><span
+                                            class="styles_age__sKz6S footer__bottom-info-age">18
+                                            <!-- -->+
+                                        </span></div>
+                                    <div class="styles_infoName__8KP42">Yandex Service AG</div>
+                                </div>
+                                <ul class="styles_bottomSectionMenu__kJDDt footer__bottom-links">
+                                    <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                                            href="https://tv.yandex.ru" target="_blank" rel="noopener noreferrer"
+                                            class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link"
+                                            data-tid="2e9b873">Телепрограмма</a></li>
+                                    <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                                            href="https://music.yandex.ru" target="_blank" rel="noopener noreferrer"
+                                            class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link"
+                                            data-tid="2e9b873">Музыка</a></li>
+                                    <li class="styles_bottomSectionMenuItem__RV9c1 footer__bottom-item" data-tid="99325639"><a
+                                            href="https://afisha.yandex.ru" target="_blank" rel="noopener noreferrer"
+                                            class="styles_bottomSectionMenuLink__oh5dU footer__bottom-link"
+                                            data-tid="2e9b873">Афиша</a></li>
+                                </ul>
+                                <div class="styles_companySection__2U1gC footer__bottom-company"><span
+                                        class="styles_companySectionTitle__UUuEV footer__bottom-company-name">Проект
+                                        компании</span><a class="styles_companyLogo__gDzdb footer__bottom-company-logo"
+                                        href="https://yandex.ru" target="_blank" rel="noopener noreferrer"
+                                        data-tid="2e9b873">Яндекс</a></div>
+                            </section>
+                        </footer>
+                    </div><button class="styles_root__p7NQg" type="button" data-tid="ed9136fe"><span
+                            class="styles_iconWrapper__VsEKC"><span class="styles_icon__6tiLC"></span></span></button>
+                    <div class="styles_root__yEgpj styles_notifyTooltip__B_TG7" data-tid="2f7f876f"></div>
+                </div>
+                <div class="styles_progress__ZoYH9" hidden="" data-tid="c2959803">
+                    <div class="styles_progressBar__p3Spc"></div>
+                </div>
+            </div>
+        </body>
+
+        </html>
+    """
 }
