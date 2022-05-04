@@ -27,4 +27,13 @@
 
     <string name="title_movies">Фильмы</string>
     <string name="title_selected_movie">Выбранный фильм</string>
+
+    <string name="movies_empty_list">Список фильмов пуст</string>
+
+    <string name="selected_empty_movie">Фильм не выбран</string>M
+    <string name="selected_header_name">Название</string>
+    <string name="selected_header_genre">Жанр</string>
+    <string name="selected_header_year">Год</string>
+    <string name="selected_header_actors">Актёры</string>
+    <string name="selected_header_description">Описание</string>
 </resources>

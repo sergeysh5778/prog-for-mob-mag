@@ -14,7 +14,7 @@
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/drawable/ic_outline_video_library_24.xml" value="0.1405" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/drawable/ic_twotone_local_movies_24.xml" value="0.1935" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/activity_login.xml" value="0.18541666666666667" />
-        <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/activity_main.xml" value="0.18541666666666667" />
+        <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/activity_main.xml" value="0.25" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/activity_main2.xml" value="0.18541666666666667" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/content_main.xml" value="0.18541666666666667" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/fragment_dashboard.xml" value="0.18541666666666667" />
@@ -22,6 +22,7 @@
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/fragment_home.xml" value="0.18541666666666667" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/fragment_movies.xml" value="0.25" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/fragment_notifications.xml" value="0.18541666666666667" />
+        <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/fragment_selected_movie.xml" value="0.1812227074235808" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/layout/list_item_movie.xml" value="0.14791666666666667" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/menu/bottom_nav_menu.xml" value="0.18541666666666667" />
         <entry key="..\:/Users/sergeysh/AndroidStudioProjects/prog-for-mob-mag/Lab2/app/src/main/res/menu/menu_main.xml" value="0.18541666666666667" />

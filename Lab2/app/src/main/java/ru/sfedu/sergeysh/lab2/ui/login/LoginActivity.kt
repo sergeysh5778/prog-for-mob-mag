@@ -15,7 +15,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import ru.sfedu.sergeysh.lab2.R
 import ru.sfedu.sergeysh.lab2.databinding.ActivityLoginBinding
-import ru.sfedu.sergeysh.lab2.ui.MainActivity
+import ru.sfedu.sergeysh.lab2.ui.movie.MainActivity
 
 class LoginActivity : AppCompatActivity() {
 
@@ -34,11 +34,6 @@ class LoginActivity : AppCompatActivity() {
         val login: MaterialButton = binding.login
 
         val loginViewModel: LoginViewModel by viewModels { LoginViewModelFactory(applicationContext) }
-        /*loginViewModel =
-            ViewModelProvider(
-                this,
-                LoginViewModelFactory(applicationContext)
-            )[LoginViewModel::class.java]*/
 
         loginViewModel.loginFormState.observe(this@LoginActivity, Observer {
             val loginState: LoginFormState = it ?: return@Observer

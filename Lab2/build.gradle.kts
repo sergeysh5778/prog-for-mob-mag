@@ -3,6 +3,7 @@ buildscript {
     val nav_version by extra("2.5.0-beta01")
     repositories {
         google()
+        mavenCentral()
     }
     dependencies {
         classpath("androidx.navigation:navigation-safe-args-gradle-plugin:$nav_version")

@@ -24,8 +24,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -53,6 +52,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-beta01")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-beta01")
     implementation("androidx.annotation:annotation:1.3.0")
+    implementation("com.github.bumptech.glide:glide:4.13.1")
+    implementation("org.jsoup:jsoup:1.14.3")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.13.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")

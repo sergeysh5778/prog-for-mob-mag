@@ -1,6 +1,8 @@
 <?xml version="1.1" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".Lab2Application"
         android:allowBackup="true"
@@ -24,11 +26,12 @@
         </activity>
 
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.movie.MainActivity"
             android:exported="true">
-            <!--android:theme="@style/Theme.Lab2"-->
 
+            <!--android:theme="@style/Theme.Lab2"-->
             <!--<intent-filter>
+
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
