@@ -22,6 +22,8 @@ class SelectedMovieFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
+    private val moviesViewModel: MovieViewModel by activityViewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -39,7 +41,6 @@ class SelectedMovieFragment : Fragment() {
         val actorsTextView: MaterialTextView = binding.actorsTextView
         val descriptionTextView: MaterialTextView = binding.descriptionTextView
 
-        val moviesViewModel: MovieViewModel by activityViewModels()
         moviesViewModel.selectedMovie.observe(viewLifecycleOwner) {
             emptyTextView.isGone = true
 
@@ -50,9 +51,7 @@ class SelectedMovieFragment : Fragment() {
                 progressIndicator.isGone = true
                 layout.isGone = false
 
-                Glide.with(this)
-                    .load(it.posterUrl)
-                    .into(posterImageView)
+                Glide.with(this).load(it.posterUrl).into(posterImageView)
                 it.apply {
                     nameTextView.text = name
                     genreTextView.text = genre
