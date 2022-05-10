@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "ru.sfedu.sergeysh.lab3phone"
+        applicationId = "ru.sfedu.sergeysh.lab3"
         versionCode = 1
         versionName = "1.0"
         targetSdk = 32
