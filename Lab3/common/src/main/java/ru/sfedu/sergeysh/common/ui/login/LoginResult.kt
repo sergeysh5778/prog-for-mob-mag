@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3.ui.login
+package ru.sfedu.sergeysh.common.ui.login
 
 /**
  * Authentication result : success (user details) or error message.

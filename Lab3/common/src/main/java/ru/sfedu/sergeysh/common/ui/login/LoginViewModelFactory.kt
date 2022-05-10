@@ -1,10 +1,11 @@
-package ru.sfedu.sergeysh.lab3.ui.login
+package ru.sfedu.sergeysh.common.ui.login
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import ru.sfedu.sergeysh.common.data.login.LoginDataSource
 import ru.sfedu.sergeysh.common.data.login.LoginRepository
+import ru.sfedu.sergeysh.common.ui.login.LoginViewModel
 
 /**
  * ViewModel provider factory to instantiate LoginViewModel.

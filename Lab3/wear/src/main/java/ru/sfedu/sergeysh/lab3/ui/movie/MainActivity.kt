@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3
+package ru.sfedu.sergeysh.lab3.ui.movie
 
 import android.app.Activity
 import android.os.Bundle

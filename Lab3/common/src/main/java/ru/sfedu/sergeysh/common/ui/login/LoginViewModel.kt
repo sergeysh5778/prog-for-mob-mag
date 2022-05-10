@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3.ui.login
+package ru.sfedu.sergeysh.common.ui.login
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

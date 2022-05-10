@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3.ui.login
+package ru.sfedu.sergeysh.lab3.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -14,6 +14,10 @@ import androidx.lifecycle.Observer
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import ru.sfedu.sergeysh.common.R
+import ru.sfedu.sergeysh.common.ui.login.LoginFormState
+import ru.sfedu.sergeysh.common.ui.login.LoginResult
+import ru.sfedu.sergeysh.common.ui.login.LoginViewModel
+import ru.sfedu.sergeysh.common.ui.login.LoginViewModelFactory
 import ru.sfedu.sergeysh.lab3.databinding.ActivityLoginBinding
 import ru.sfedu.sergeysh.lab3.ui.movie.MainActivity
 
@@ -40,13 +44,13 @@ class LoginActivity : AppCompatActivity() {
             login.isEnabled = loginState.isDataValid
 
             username.error = if (loginState.usernameError != null) {
-                getString(loginState.usernameError)
+                getString(loginState.usernameError!!)
             } else {
                 null
             }
 
             password.error = if (loginState.passwordError != null) {
-                getString(loginState.passwordError)
+                getString(loginState.passwordError!!)
             } else {
                 null
             }
@@ -56,13 +60,13 @@ class LoginActivity : AppCompatActivity() {
             val loginResult: LoginResult = it ?: return@Observer
 
             if (loginResult.error != null) {
-                showLoginFailed(loginResult.error)
+                showLoginFailed(loginResult.error!!)
 
                 return@Observer
             }
 
             if (loginResult.success != null) {
-                updateUiWithUser(loginResult.success)
+                updateUiWithUser(loginResult.success!!)
 
                 setResult(RESULT_OK)
                 //Complete and destroy login activity once successful

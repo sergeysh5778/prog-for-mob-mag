@@ -1,0 +1,4 @@
+<resources>
+    <string name="prompt_username">E-mail</string>
+    <string name="prompt_password">Password</string>
+</resources>
