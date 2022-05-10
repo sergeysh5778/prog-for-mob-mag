@@ -9,6 +9,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import ru.sfedu.sergeysh.lab3.R
 import ru.sfedu.sergeysh.lab3.databinding.FragmentMoviesBinding
 
@@ -43,12 +46,30 @@ class MoviesFragment : Fragment() {
             (binding.movieListRecyclerView.adapter as MoviesAdapter).updateMovieList(it)
         }
 
-        binding.movieListRecyclerView.adapter =
+        val movieListRecyclerView: RecyclerView = binding.movieListRecyclerView
+        val fab: FloatingActionButton = binding.fab
+
+        movieListRecyclerView.addOnScrollListener(object : OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (recyclerView.canScrollVertically(-1)) {
+                    fab.show()
+                } else {
+                    fab.hide()
+                }
+            }
+        })
+        movieListRecyclerView.adapter =
             MoviesAdapter(movieViewModel.movieList.value ?: listOf()) { movieUrl ->
                 showMovieDetails(
                     movieUrl
                 )
             }
+
+        fab.setOnClickListener {
+            movieListRecyclerView.smoothScrollToPosition(0)
+        }
 
         return root
     }
