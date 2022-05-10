@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3.data.movie
+package ru.sfedu.sergeysh.common.data.movie
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

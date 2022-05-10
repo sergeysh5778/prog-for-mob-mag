@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import ru.sfedu.sergeysh.lab3.R
+import ru.sfedu.sergeysh.common.R
 import ru.sfedu.sergeysh.lab3.databinding.ActivityLoginBinding
 import ru.sfedu.sergeysh.lab3.ui.movie.MainActivity
 
@@ -82,8 +82,7 @@ class LoginActivity : AppCompatActivity() {
             setOnEditorActionListener { _, actionId, _ ->
                 when (actionId) {
                     EditorInfo.IME_ACTION_DONE -> loginViewModel.login(
-                        username.text.toString(),
-                        password.text.toString()
+                        username.text.toString(), password.text.toString()
                     )
                 }
                 false
@@ -98,9 +97,7 @@ class LoginActivity : AppCompatActivity() {
     private fun updateUiWithUser(displayName: String) {
         val welcome: String = getString(R.string.welcome)
         Toast.makeText(
-            applicationContext,
-            "$welcome$displayName",
-            Toast.LENGTH_LONG
+            applicationContext, "$welcome$displayName", Toast.LENGTH_LONG
         ).show()
 
         startActivity(Intent(applicationContext, MainActivity::class.java))

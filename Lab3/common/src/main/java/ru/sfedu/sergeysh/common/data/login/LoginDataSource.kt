@@ -1,7 +1,7 @@
-package ru.sfedu.sergeysh.lab3.data.login
+package ru.sfedu.sergeysh.common.data.login
 
 import android.content.Context
-import ru.sfedu.sergeysh.lab3.R
+import ru.sfedu.sergeysh.common.R
 
 /**
  * Class that handles authentication w/ login credentials and retrieves user information.

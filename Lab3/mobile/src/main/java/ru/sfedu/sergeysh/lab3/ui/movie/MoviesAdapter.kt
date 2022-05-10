@@ -4,8 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import ru.sfedu.sergeysh.common.data.movie.MovieCard
 import ru.sfedu.sergeysh.lab3.databinding.ListItemMovieBinding
-import ru.sfedu.sergeysh.lab3.data.movie.MovieCard
 
 /**
  * Adapter for the [RecyclerView] in [MoviesFragment].

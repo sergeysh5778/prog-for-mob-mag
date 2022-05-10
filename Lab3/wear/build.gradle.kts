@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation(project(mapOf("path" to ":common")))
     wearApp(project(":wear"))
     implementation("androidx.core:core-ktx:1.8.0-beta01")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")

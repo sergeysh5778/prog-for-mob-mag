@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3.data.login
+package ru.sfedu.sergeysh.common.data.login
 
 /**
  * Class that requests authentication and user information from the remote data source and

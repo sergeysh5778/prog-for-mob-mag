@@ -5,9 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import ru.sfedu.sergeysh.lab3.R
-import ru.sfedu.sergeysh.lab3.data.login.LoggedInUser
-import ru.sfedu.sergeysh.lab3.data.login.LoginRepository
+import ru.sfedu.sergeysh.common.R
+import ru.sfedu.sergeysh.common.data.login.LoggedInUser
+import ru.sfedu.sergeysh.common.data.login.LoginRepository
 
 class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel() {
 

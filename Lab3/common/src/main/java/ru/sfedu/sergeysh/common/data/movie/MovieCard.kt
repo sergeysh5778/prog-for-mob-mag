@@ -1,4 +1,4 @@
-package ru.sfedu.sergeysh.lab3.data.movie
+package ru.sfedu.sergeysh.common.data.movie
 
 data class MovieCard(
     val movieUrl: String,

@@ -1,10 +1,10 @@
 plugins {
-    id("com.android.application")
+    id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "ru.sfedu.sergeysh.lab3"
+    namespace = "ru.sfedu.sergeysh.common"
     compileSdkPreview = "Tiramisu"
     buildToolsVersion = "33.0.0 rc3"
 
@@ -13,45 +13,36 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    buildFeatures {
-        viewBinding = true
-    }
-
     kotlinOptions {
         jvmTarget = "11"
     }
 
     defaultConfig {
-        applicationId = "ru.sfedu.sergeysh.lab3"
-        versionCode = 1
-        versionName = "1.0"
-        targetSdk = 32
-        minSdk = 32
+        targetSdkPreview = "Tiramisu"
+        minSdk = 30
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
             )
         }
     }
 }
 
 dependencies {
-    implementation(project(mapOf("path" to ":common")))
-    wearApp(project(":wear"))
-    implementation("androidx.appcompat:appcompat:1.4.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.3")
     implementation("androidx.core:core-ktx:1.8.0-beta01")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.5.0-beta01")
-    implementation("androidx.navigation:navigation-ui-ktx:2.5.0-beta01")
-    implementation("com.google.android.gms:play-services-wearable:17.1.0")
+    implementation("androidx.appcompat:appcompat:1.4.1")
     implementation("com.google.android.material:material:1.6.0")
-    implementation("com.github.bumptech.glide:glide:4.13.2")
+    implementation("org.jsoup:jsoup:1.14.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1-native-mt")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1-native-mt")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")

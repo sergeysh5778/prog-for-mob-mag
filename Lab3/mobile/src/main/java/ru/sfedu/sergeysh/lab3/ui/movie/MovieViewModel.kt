@@ -5,9 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import ru.sfedu.sergeysh.lab3.data.movie.MovieCard
-import ru.sfedu.sergeysh.lab3.data.movie.MovieDetails
-import ru.sfedu.sergeysh.lab3.data.movie.MovieRepository
+import ru.sfedu.sergeysh.common.data.movie.MovieCard
+import ru.sfedu.sergeysh.common.data.movie.MovieDetails
+import ru.sfedu.sergeysh.common.data.movie.MovieRepository
 
 class MovieViewModel : ViewModel() {
 

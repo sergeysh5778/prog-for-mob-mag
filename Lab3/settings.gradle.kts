@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 rootProject.name = "Lab 3"
 include(":mobile")
 include(":wear")
+include(":common")
