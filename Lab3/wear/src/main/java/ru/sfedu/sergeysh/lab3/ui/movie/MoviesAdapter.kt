@@ -7,7 +7,7 @@ import ru.sfedu.sergeysh.common.data.movie.MovieItem
 import ru.sfedu.sergeysh.lab3.databinding.ListItemMovieBinding
 
 /**
- * Adapter for the [RecyclerView] in [MoviesFragment].
+ * Adapter for the [RecyclerView] in [MainActivity].
  */
 
 class MoviesAdapter(private var dataSet: List<MovieItem>) :
