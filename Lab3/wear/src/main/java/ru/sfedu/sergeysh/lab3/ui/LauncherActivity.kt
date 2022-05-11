@@ -1,13 +1,13 @@
 package ru.sfedu.sergeysh.lab3.ui
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.appcompat.app.AppCompatActivity
 import ru.sfedu.sergeysh.lab3.databinding.ActivityLauncherBinding
 
-class LauncherActivity : Activity() {
+class LauncherActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

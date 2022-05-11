@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import ru.sfedu.sergeysh.common.R
@@ -37,8 +36,8 @@ class LoginActivity : AppCompatActivity() {
 
         val loginViewModel: LoginViewModel by viewModels { LoginViewModelFactory(applicationContext) }
 
-        loginViewModel.loginFormState.observe(this@LoginActivity, Observer {
-            val loginState: LoginFormState = it ?: return@Observer
+        loginViewModel.loginFormState.observe(this) {
+            val loginState: LoginFormState = it ?: return@observe
 
             // disable login button unless both username / password is valid
             login.isEnabled = loginState.isDataValid
@@ -54,15 +53,15 @@ class LoginActivity : AppCompatActivity() {
             } else {
                 null
             }
-        })
+        }
 
-        loginViewModel.loginResult.observe(this, Observer {
-            val loginResult: LoginResult = it ?: return@Observer
+        loginViewModel.loginResult.observe(this) {
+            val loginResult: LoginResult = it ?: return@observe
 
             if (loginResult.error != null) {
                 showLoginFailed(loginResult.error!!)
 
-                return@Observer
+                return@observe
             }
 
             if (loginResult.success != null) {
@@ -72,7 +71,7 @@ class LoginActivity : AppCompatActivity() {
                 //Complete and destroy login activity once successful
                 finish()
             }
-        })
+        }
 
         username.afterTextChanged {
             loginViewModel.loginDataChanged(username.text.toString(), password.text.toString())

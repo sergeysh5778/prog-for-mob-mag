@@ -25,8 +25,8 @@ android {
         applicationId = "ru.sfedu.sergeysh.lab3"
         versionCode = 1
         versionName = "1.0"
-        targetSdk = 32
-        minSdk = 32
+        targetSdk = 30
+        minSdk = 30
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -35,37 +35,39 @@ class MoviesFragment : Fragment() {
 
         navController = findNavController()
 
+        val movieListRecyclerView: RecyclerView = binding.movieListRecyclerView
+        val fab: FloatingActionButton = binding.fab
+
         movieViewModel.movieList.observe(viewLifecycleOwner) {
             binding.progressIndicator.isGone = true
 
             it.isEmpty().apply {
                 binding.emptyTextView.isGone = !this
-                binding.movieListRecyclerView.isGone = this
+                movieListRecyclerView.isGone = this
             }
 
-            (binding.movieListRecyclerView.adapter as MoviesAdapter).updateMovieList(it)
+            (movieListRecyclerView.adapter as MoviesAdapter).updateMovieList(it)
         }
 
-        val movieListRecyclerView: RecyclerView = binding.movieListRecyclerView
-        val fab: FloatingActionButton = binding.fab
+        movieListRecyclerView.apply {
+            addOnScrollListener(object : OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
 
-        movieListRecyclerView.addOnScrollListener(object : OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                if (recyclerView.canScrollVertically(-1)) {
-                    fab.show()
-                } else {
-                    fab.hide()
+                    if (recyclerView.canScrollVertically(-1)) {
+                        fab.show()
+                    } else {
+                        fab.hide()
+                    }
                 }
-            }
-        })
-        movieListRecyclerView.adapter =
-            MoviesAdapter(movieViewModel.movieList.value ?: listOf()) { movieUrl ->
+            })
+
+            adapter = MoviesAdapter(movieViewModel.movieList.value ?: listOf()) { movieUrl ->
                 showMovieDetails(
                     movieUrl
                 )
             }
+        }
 
         fab.setOnClickListener {
             movieListRecyclerView.smoothScrollToPosition(0)

@@ -8,9 +8,9 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import ru.sfedu.sergeysh.common.R
 import ru.sfedu.sergeysh.common.ui.login.LoginFormState
@@ -20,7 +20,7 @@ import ru.sfedu.sergeysh.common.ui.login.LoginViewModelFactory
 import ru.sfedu.sergeysh.lab3.databinding.ActivityLoginBinding
 import ru.sfedu.sergeysh.lab3.ui.movie.MainActivity
 
-class LoginActivity : ComponentActivity() {
+class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

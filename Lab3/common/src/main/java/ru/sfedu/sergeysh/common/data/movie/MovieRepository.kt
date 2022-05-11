@@ -48,6 +48,32 @@ class MovieRepository {
         }
     }
 
+    suspend fun getSimpleMovieList(): List<MovieItem> {
+        return withContext(Dispatchers.IO) {
+            try {
+                var doc: Document = Jsoup.connect("$baseUrl$top250Url").get()
+                var movieDivs: Elements = doc.select("div[data-tid='8a6cbb06']")
+                if (movieDivs.isEmpty()) {
+                    doc = Jsoup.parse(top250html)
+                    movieDivs = doc.select("div[data-tid='8a6cbb06']")
+                }
+
+                movieDivs.map {
+                    /*val mainDiv: Element = it.selectFirst("div.styles_main__Y8zDm")!!
+                    val nameSpan: Element = mainDiv.selectFirst("span[data-tid='4502216a']")!!*/
+//                    val nameSpan: Element = it.selectFirst("span[data-tid='4502216a']")!!
+
+                    MovieItem(
+//                        nameSpan.text(),
+                        it.selectFirst("span[data-tid='4502216a']")!!.text(),
+                    )
+                }
+            } catch (ex: Exception) {
+                listOf()
+            }
+        }
+    }
+
     suspend fun getMovieDetails(movieUrl: String): MovieDetails {
         return withContext(Dispatchers.IO) {
             val movieDiv: Element = try {
