@@ -59,14 +59,7 @@ class MovieRepository {
                 }
 
                 movieDivs.map {
-                    /*val mainDiv: Element = it.selectFirst("div.styles_main__Y8zDm")!!
-                    val nameSpan: Element = mainDiv.selectFirst("span[data-tid='4502216a']")!!*/
-//                    val nameSpan: Element = it.selectFirst("span[data-tid='4502216a']")!!
-
-                    MovieItem(
-//                        nameSpan.text(),
-                        it.selectFirst("span[data-tid='4502216a']")!!.text(),
-                    )
+                    MovieItem(it.selectFirst("span[data-tid='4502216a']")!!.text())
                 }
             } catch (ex: Exception) {
                 listOf()
